@@ -1,0 +1,1 @@
+<view class="noticeLayout"><view class="title"><view class="tag">置顶</view><view class="font">这个区域填写标题</view></view><view class="info"><view class="item"></view><view class="item"><uni-dateformat wx:if="{{a}}" u-i="fc16c4cc-0" bind:__l="__l" u-p="{{a}}"></uni-dateformat></view></view><view class="content"> 内容区域 </view></view>
