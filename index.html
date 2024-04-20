@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="./index.css">
+  <style>
+
+  </style>
+</head>
+
+<body>
+  <div class="bigmain">
+    <div class="prompt2"></div>
+    <div class="grade">
+      <button class="easy">容易</button>
+      <button class="middle">中等</button>
+      <button class="hard">困难</button>
+    </div>
+    <div class="top"><span class="title">关卡1</span>
+      <ul>
+        <li><span>容易</span></li>
+        <li><span class="mistake">错误:0/3</span></li>
+        <li><span class="clock">00:00</span></li>
+      </ul>
+
+    </div>
+
+    <div class="main"><span></span><span></span><span
+        class="right"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="bottom1">
+      <ul>
+        <li><span class="clear"><img src="./img/擦除1.png" alt=""></span><span>擦除</span></li>
+        <li><span class="back"><img src="./img/撤回2.png" alt=""></span><span>撤回</span></li>
+        <li><span class="note"><img src="./img/笔记1.png" alt=""></span><span>笔记</span></li>
+        <li><span class="prompt"><img src="./img/提示.png" alt=""></span><span>提示</span></li>
+      </ul>
+    </div>
+    <div class="bottom2">
+      <span>1</span>
+      <span>2</span>
+      <span>3</span>
+      <span>4</span>
+      <span>5</span>
+      <span>6</span>
+      <span>7</span>
+      <span>8</span>
+      <span>9</span>
+    </div>
+  </div>
+
+</body>
+<script>
+  function isValid(board, row, col, num) {
+    for (let i = 0; i < 9; i++) {
+      if (board[row][i] === num) {
+        return false;
+      }
+    }
+
+    for (let i = 0; i < 9; i++) {
+      if (board[i][col] === num) {
+        return false;
+      }
+    }
+
+    const boxRow = Math.floor(row / 3) * 3;
+    const boxCol = Math.floor(col / 3) * 3;
+    for (let i = boxRow; i < boxRow + 3; i++) {
+      for (let j = boxCol; j < boxCol + 3; j++) {
+        if (board[i][j] === num) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  function solveSudoku(board) {
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        if (board[row][col] !== 0) {
+          continue;
+        }
+        for (let num = 1; num <= 9; num++) {
+          if (isValid(board, row, col, num)) {
+            board[row][col] = num;
+            if (solveSudoku(board)) {
+              return true;
+            }
+            board[row][col] = 0;
+          }
+        }
+        return false;
+      }
+    }
+    return true;
+  }
+
+  let board = Array.from({ length: 9 }, () => Array(9).fill(0))
+  let board_test = Array.from({ length: 9 }, () => Array(9).fill(0))
+  let n1 = n2 = n3 = n4 = n5 = n6 = 0
+  let target = []
+  let boardNote = Array.from({ length: 9 }, () => Array(9).fill(0))
+  let boardNote2 = Array.from({ length: 9 }, () => Array(9).fill(0))
+  let action = []
+  let isNote = false
+  let isClear = false
+  let isHasNote = false
+  // 是否融合笔记数组
+  let isFirst = false
+
+  // 记录数组初始值
+  function record() {
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        if (board[i][j] == 0) {
+          board_test[i][j] = false
+        }
+        else {
+          board_test[i][j] = true
+        }
+      }
+    }
+  }
+
+
+
+  function randomNum() {
+    let random = Math.random() * 10
+    if (Math.floor(random) != 0) {
+      return Math.floor(random)
+    }
+    return Math.ceil(random)
+  }
+  function random() {
+    let t = randomNum()
+    for (let i = 0; i < 9; i++) {
+      if (test(t)) {
+        board[0][i] = t
+      }
+
+    }
+    function test(num) {
+      for (let i = 0; i < 9; i++) {
+        if (board[0][i] == num) return false
+      }
+      return true
+    }
+  }
+
+
+  function dig() {
+    for (let i = 0; i < 9; i++) {
+      board[i][randomNum()] = 0
+      board[i][randomNum()] = 0
+      board[i][randomNum()] = 0
+      board[i][randomNum()] = 0
+      board[i][randomNum()] = 0
+      board[i][randomNum()] = 0
+    }
+  }
+  // 容易
+  function dig1() {
+    while (getVoid(board) < 40) {
+      let row = randomNum() - 1
+      let col = randomNum() - 1
+      board[row][col] = 0
+    }
+  }
+  // 中等
+  function dig2() {
+    while (getVoid(board) < 50) {
+      let row = randomNum() - 1
+      let col = randomNum() - 1
+      board[row][col] = 0
+    }
+  }
+  // 困难
+  function dig3() {
+    let row, col
+    while (getVoid(board) < 40) {
+      row = randomNum() - 1
+      col = randomNum() - 1
+      board[row][col] = 0
+    }
+  }
+  // 统计空数量
+  function getVoid(board) {
+    let num = 0
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        if (!board[i][j]) num++
+      }
+    }
+    return num
+  }
+
+  let spanArr = document.querySelectorAll('.main span')
+  random()
+  solveSudoku(board);
+  target = board.map(item => [...item])
+  dig1()
+  record()
+  show()
+  refreshBoardNote()
+  console.log(target);
+
+  for (let row of board) {
+    console.log(row);
+  }
+  console.log(board_test);
+
+  // 显示数组
+  function show() {
+    let n = 0
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        if (board[i][j] == 0) {
+
+          spanArr[n].innerHTML = ''
+        }
+        else {
+          spanArr[n].innerHTML = board[i][j]
+          if (!board_test[i][j]) {
+            spanArr[n].classList.add('playerActive')
+          }
+          if (board_test[i][j]) {
+            spanArr[n].classList.remove('playerActive')
+          }
+        }
+        n++
+      }
+    }
+  }
+
+
+
+  let num = 0
+  // 鼠标点击更换颜色
+  let body = document.querySelector('body')
+  let numspanArr = document.querySelectorAll('.bottom2 span')
+  for (let i = 0; i < numspanArr.length; i++) {
+    numspanArr[i].addEventListener('click', () => {
+      isClear = false
+      clearImg.setAttribute('src', './img/擦除1.png')
+      num = numspanArr[i].innerHTML
+      for (let j = 0; j < numspanArr.length; j++) {
+        numspanArr[j].classList.remove('active')
+      }
+      numspanArr[i].classList.add('active')
+      numShow()
+
+    })
+  }
+  // 增加新值
+  function add(row, col, num) {
+    board[row][col] = Number(num)
+  }
+  // 删除旧值
+  function remove(row, col) {
+    board[row][col] = 0
+  }
+  // 检测是否合法
+  function test(row, col, num) {
+    // 检查行是否合法
+    for (let i = 0; i < 9; i++) {
+      if (board[row][i] == num) {
+        return false;
+      }
+    }
+    // 检查列是否合法
+    for (let i = 0; i < 9; i++) {
+      if (board[i][col] == num) {
+        return false;
+      }
+    }
+    // 检查九宫格是否合法
+    const boxRowStart = Math.floor(row / 3) * 3;
+    const boxColStart = Math.floor(col / 3) * 3;
+    for (let i = boxRowStart; i < boxRowStart + 3; i++) {
+      for (let j = boxColStart; j < boxColStart + 3; j++) {
+        if (board[i][j] == num) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  // 点击开始计时
+  let clock = document.querySelector('.clock')
+  function run() {
+    let time1 = Date.now()
+    let timer = setInterval(() => {
+      let sum = Date.now() - time1
+      let second = Math.floor(sum / 1000) % 60
+      let minute = Math.floor(sum / 1000 / 60 % 60)
+      second = second < 10 ? '0' + second : second
+      minute = minute < 10 ? '0' + minute : minute
+      clock.innerHTML = `${minute}:${second}`
+    }, 1000);
+  }
+  run()
+  // 擦除
+  let main = document.querySelector('.main')
+  let clear = document.querySelector('.clear')
+  let clearImg = document.querySelector('.clear img')
+  clear.addEventListener('click', function () {
+    num = 0
+    isClear = !isClear
+    isNote = false
+    noteImg.setAttribute('src', './img/笔记1.png')
+    for (let j = 0; j < numspanArr.length; j++) {
+      numspanArr[j].classList.remove('active')
+    }
+    if (!isClear) {
+      clearImg.setAttribute('src', './img/擦除1.png')
+    }
+    else {
+      clearImg.setAttribute('src', './img/擦除3.jpg')
+      isNote = false
+      numShow()
+    }
+  })
+
+  let mistakeSpan = document.querySelector('.mistake')
+  let mistake = 0
+  function start() {
+    for (let i = 0; i < spanArr.length; i++) {
+      // 为每一个格子添加监听
+      spanArr[i].addEventListener('click', function () {
+        let row = Math.floor(i / 9)
+        let col = i % 9
+        let obj = {}
+
+
+        if (!isNote) {
+
+          // 删除
+          if (isClear && !board_test[row][col]) {
+            remove(row, col)
+            // console.log('asdad');
+            obj = { name: 'remove', row, col, val: spanArr[i].innerHTML }
+            action.push(obj)
+            console.log(action);
+            spanArr[i].innerHTML = ''
+            numShow()
+            refreshBoardNote()
+            if (isHasNote) {
+              NoteShow()
+            }
+
+          }
+          // 为空格填值
+          else if (num != 0 && !isClear && !board[row][col]) {
+            // 合法填值
+            if (isTarget(row, col, num)) {
+              spanArr[i].innerHTML = num
+              spanArr[i].classList.add('playerActive')
+              numShow()
+              add(row, col, num)
+              obj = { name: 'add', row, col, val: spanArr[i].innerHTML }
+              action.push(obj)
+              refreshBoardNote()
+              console.log(action);
+              backImg.setAttribute('src', './img/撤回1.png')
+              if (isHasNote) {
+                NoteShow()
+              }
+            }
+            // 错误处理
+            else {
+              spanArr[i].classList.add('mistake')
+              spanArr[i].innerHTML = num
+              mistake++
+              if (mistake == 3) {
+                alert('游戏失败！')
+                location.reload()
+              }
+              mistakeSpan.innerHTML = `错误:${mistake}/3`
+              setTimeout(() => {
+                spanArr[i].classList.remove('mistake')
+                spanArr[i].innerHTML = ''
+                if (isHasNote) {
+                  NoteShow()
+                }
+              }, 500);
+            }
+            // 验证所有
+            if (testAll()) {
+              alert(`恭喜您通关！`)
+              clearInterval(timer)
+              isStart = false
+            }
+
+          }
+        }
+        else {
+          if (!board[row][col] && !isClear && num != 0) {
+            if (spanArr[i].innerHTML == '') {
+              spanArr[i].innerHTML = `<span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>`
+            }
+            if (test(row, col, num) == false) {
+              spanArr[i].classList.add('mistake')
+              setTimeout(() => {
+                spanArr[i].classList.remove('mistake')
+              }, 500);
+            }
+            else {
+
+              let n = Number(num)
+              let innerSpanArr = document.querySelectorAll(`.main span:nth-child(${i + 1}) span`)
+
+              for (let j = 0; j < 9; j++) {
+                innerSpanArr[j].style.border = 'none'
+              }
+              if (isHasNote) {
+
+                if (boardNote2[row][col].includes(n)) {
+                  if (target[row][col] == n) {
+                    spanArr[i].classList.add('mistake')
+                    setTimeout(() => {
+                      spanArr[i].classList.remove('mistake')
+                    }, 500);
+                  }
+                  else {
+                    let index = boardNote2[row][col].indexOf(n)
+                    boardNote2[row][col].splice(index, 1)
+                  }
+
+                }
+                else {
+                  boardNote2[row][col].push(n)
+                }
+                NoteShow()
+              }
+              else {
+
+                if (innerSpanArr[n - 1].innerHTML == '') {
+                  innerSpanArr[n - 1].innerHTML = n
+                }
+                else {
+                  innerSpanArr[n - 1].innerHTML = ''
+                }
+              }
+            }
+
+          }
+        }
+      })
+    }
+
+  }
+
+  start()
+  // 检测所有是否通关
+  function testAll() {
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        if (board[row][col] == 0) return false
+        if (!test(row, col, board[row, col])) {
+          return flase
+        }
+      }
+    }
+    return true
+  }
+  // 点击数字改变鼠标形状
+
+
+  // 根据不同数字高亮显示
+  function numShow() {
+    for (let i = 0; i < spanArr.length; i++) {
+      spanArr[i].classList.remove('active2')
+      if (num === spanArr[i].innerHTML) {
+        spanArr[i].classList.add('active2')
+      }
+    }
+  }
+
+  // 光标移动到面板效果显示
+  function mouseoverShow() {
+    for (let i = 0; i < spanArr.length; i++) {
+      spanArr[i].addEventListener('mouseover', function () {
+        let row = Math.floor(i / 9)
+        let col = i % 9
+
+        if (!isNote) {
+          if (!board[row][col] && num != 0 && !isClear) {
+            let row = Math.floor(i / 9)
+            let col = i % 9
+            spanArr[i].classList.add('mainActive3')
+            for (let j = row * 9; j < row * 9 + 9; j++) {
+              if (num != spanArr[j].innerHTML) {
+                spanArr[j].classList.add('secondActive3')
+              }
+            }
+            for (let j = col; j <= col + 72; j += 9) {
+              if (num != spanArr[j].innerHTML) {
+                spanArr[j].classList.add('secondActive3')
+              }
+            }
+            let m = Math.floor(row / 3)
+            let n = Math.floor(col / 3)
+            for (let j = 3 * m; j < 3 * m + 3; j++) {
+              for (let k = j * 9 + n * 3; k < j * 9 + n * 3 + 3; k++) {
+                if (num != spanArr[k].innerHTML) {
+                  spanArr[k].classList.add('secondActive3')
+                }
+              }
+            }
+          }
+          if (isClear) {
+            spanArr[i].classList.add('mainActive3')
+          }
+        }
+        else {
+          spanArr[i].classList.add('mainActive3')
+        }
+
+
+      })
+      spanArr[i].addEventListener('mouseleave', function () {
+        spanArr[i].classList.remove('mainActive3')
+        for (let i = 0; i < spanArr.length; i++) {
+          spanArr[i].classList.remove('secondActive3')
+        }
+      })
+    }
+  }
+  mouseoverShow()
+
+  // 撤回操作
+  let back = document.querySelector('.back')
+  let backImg = document.querySelector('.back img')
+  back.addEventListener('click', function () {
+    if (action.length == 0) {
+      backImg.setAttribute('src', './img/撤回2.png')
+      return
+    }
+    else {
+      let obj = action.pop()
+      let { name, row, col, val } = obj
+      let i = row * 9 + col
+      if (name == 'add') {
+        spanArr[i].innerHTML = ''
+        remove(row, col)
+      }
+      else {
+        spanArr[i].innerHTML = val
+        add(row, col, val)
+      }
+      numShow()
+      if (isHasNote) {
+        refreshBoardNote()
+        NoteShow()
+      }
+      if (action.length == 0) {
+        backImg.setAttribute('src', './img/撤回2.png')
+      }
+    }
+
+  })
+  // 笔记功能
+  let note = document.querySelector('.note')
+  let noteImg = document.querySelector('.note img')
+  note.addEventListener('click', function () {
+    isNote = !isNote
+    isClear = false
+    clearImg.setAttribute('src', './img/擦除1.png')
+    if (isNote) {
+      noteImg.setAttribute('src', './img/笔记2.png')
+    }
+    else {
+      noteImg.setAttribute('src', './img/笔记1.png')
+    }
+  })
+  // 判断格子内是否为数字
+  function isNumber(i) {
+    let reg = /^[1-9]$/
+    return reg.test(Number(i))
+  }
+  // 满汉全席
+  function FullHouse() {
+    for (let boxRow = 0; boxRow < 3; boxRow++) {
+      for (let boxCol = 0; boxCol < 3; boxCol++) {
+        let n = 0
+        let row, col, Span, val
+        let candidates = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        for (let i = boxRow * 3; i < boxRow * 3 + 3; i++) {
+          for (let j = boxCol * 3; j < boxCol * 3 + 3; j++) {
+            if (!board[i][j]) {
+              n++
+              row = i
+              col = j
+              Span = spanArr[i * 9 + j]
+            }
+            else {
+              candidates[board[i][j] - 1] = 0
+            }
+          }
+        }
+        if (n == 1) {
+          val = candidates.filter(item => item != 0)[0]
+          return { row, col, val, Span }
+        }
+      }
+    }
+    return { row: -1, col: -1, val: -1, Span: -1 }
+  }
+  // 余差法
+  function exclude() {
+    let row = col = val = -1
+    let arr2 = arr = []
+    let span
+    for (let i = 0; i < spanArr.length; i++) {
+      row = Math.floor(i / 9)
+      col = i % 9
+
+      // 找空白
+      if (!board[row][col]) {
+        arr = []
+        arr2 = []
+        for (let j = 0; j < 9; j++) {
+          if (board[row][j] && !arr.includes(board[row][j])) {
+            arr.push(board[row][j])
+          }
+          if (board[j][col] && !arr.includes(board[j][col])) {
+            arr.push(board[j][col])
+          }
+          arr2.push(spanArr[row * 9 + j])
+          arr2.push(spanArr[col + j * 9])
+
+        }
+        let m = Math.floor(row / 3)
+        let n = Math.floor(col / 3)
+        for (let j = 3 * m; j < 3 * m + 3; j++) {
+          for (let k = n * 3; k < n * 3 + 3; k++) {
+            if (board[j][k] && !arr.includes(board[j][k])) {
+              arr.push(board[j][k])
+            }
+            arr2.push(spanArr[j * 9 + k])
+          }
+        }
+        arr.sort()
+        if (arr.length != 8) continue
+        else {
+          for (let j = 0; j < 8; j++) {
+            if (j != arr[j] - 1) {
+              return { row, col, val: j + 1, arr2, span: spanArr[i] }
+            }
+          }
+          return { row, col, val: 9, arr2, span: spanArr[i] }
+        }
+      }
+    }
+    return { row: -1, col, val, arr2, span }
+  }
+  // 摒除法
+  function abandon() {
+
+    for (let val = 1; val <= 9; val++) {
+      // auxArr记录禁区
+      let auxArr = [[], [], [], [], [], [], [], [], []]
+      // auxArr2记录num位置
+      let auxArr2 = []
+      // 记录渲染格子
+      let auxArr3 = []
+      let span
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          auxArr[row][col] = false
+        }
+      }
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          if (board[row][col]) {
+            auxArr[row][col] = true
+            if (board[row][col] == val) {
+              let obj = { row, col }
+              auxArr2.push(obj)
+              for (let i = 0; i < 9; i++) {
+                auxArr[row][i] = true
+                auxArr[i][col] = true
+              }
+              let boxRow = Math.floor(row / 3)
+              let boxCol = Math.floor(col / 3)
+              for (let i = boxRow * 3; i < boxRow * 3 + 3; i++) {
+                for (let j = boxCol * 3; j < boxCol * 3 + 3; j++) {
+                  auxArr[i][j] = true
+                }
+              }
+            }
+          }
+
+        }
+      }
+      for (let boxRow = 0; boxRow < 3; boxRow++) {
+        for (let boxCol = 0; boxCol < 3; boxCol++) {
+          let n = 0
+          let i1 = j1 = -1
+          let row = col = 0
+          for (let i = boxRow * 3; i < boxRow * 3 + 3; i++) {
+            for (let j = boxCol * 3; j < boxCol * 3 + 3; j++) {
+              if (!auxArr[i][j]) {
+                n++
+                i1 = i
+                j1 = j
+              }
+            }
+          }
+          if (n == 1) {
+            console.log(auxArr2);
+            for (let obj of auxArr2) {
+              if (obj.row >= boxRow * 3 && obj.row < boxRow * 3 + 3) {
+                for (let i = 0; i < 9; i++) {
+                  auxArr3.push(spanArr[obj.row * 9 + i])
+                }
+              }
+              if (obj.col >= boxCol * 3 && obj.col < boxCol * 3 + 3) {
+                for (let i = 0; i < 9; i++) {
+                  auxArr3.push(spanArr[i * 9 + obj.col])
+                }
+              }
+            }
+            return { val, row: i1, col: j1, Span: spanArr[i1 * 9 + j1], auxArr, auxArr3 }
+          }
+        }
+      }
+    }
+    return { val: -1, row: -1, col: -1, spanArr }
+  }
+  // 笔记法
+  function NoteShow() {
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        if (!board[row][col]) {
+          spanArr[row * 9 + col].innerHTML = `<span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>`
+          let innerSpanArr = document.querySelectorAll(`.main span:nth-child(${row * 9 + col + 1}) span`)
+          for (let val of boardNote[row][col]) {
+            let n = Number(val)
+            if (innerSpanArr[n - 1].innerHTML == '') {
+              innerSpanArr[n - 1].innerHTML = n
+            }
+            else {
+              innerSpanArr[n - 1].innerHTML = ''
+            }
+          }
+          for (let j = 0; j < 9; j++) {
+            innerSpanArr[j].style.border = 'none'
+          }
+        }
+      }
+    }
+  }
+  // 隐藏单数
+  function HiddenSingle() {
+    let row = col = Span = str = auxArr = val = -1
+    for (let value = 1; value <= 9; value++) {
+      // 行判断
+      for (let i = 0; i < 9; i++) {
+        let n = 0
+        auxArr = []
+        for (let j = 0; j < 9; j++) {
+          auxArr.push(spanArr[i * 9 + j])
+          if (boardNote[i][j].includes(value)) {
+            n++
+            row = i
+            col = j
+            str = '行'
+            Span = spanArr[i * 9 + j]
+            val = value
+
+          }
+        }
+        if (n == 1) {
+          return { row, col, val, str, Span, auxArr }
+        }
+      }
+      // 列判断
+      for (let j = 0; j < 9; j++) {
+        let n = 0
+        auxArr = []
+        for (let i = 0; i < 9; i++) {
+          auxArr.push(spanArr[i * 9 + j])
+          if (boardNote[i][j].includes(value)) {
+            n++
+            row = i
+            col = j
+            str = '列'
+            Span = spanArr[i * 9 + j]
+            val = value
+          }
+        }
+        if (n == 1) {
+          return { row, col, str, val, Span, auxArr }
+        }
+      }
+    }
+    return { row: -1, col, val, Span, str, auxArr }
+  }
+
+  // 区块摒除法
+  function BlockAbandon() {
+    console.log(boardNote);
+    for (let val = 1; val <= 9; val++) {
+      let row1, row2, row3
+      let col1, col2, col3
+      let n = 0
+      for (let boxRow = 0; boxRow < 3; boxRow++) {
+        for (let boxCol = 0; boxCol < 3; boxCol++) {
+          let auxArr = []
+          n = 0
+          row1 = row2 = row3 = col1 = col2 = col3 = -1
+          for (let row = boxRow * 3; row < boxRow * 3 + 3; row++) {
+            for (let col = boxCol * 3; col < boxCol * 3 + 3; col++) {
+              if (boardNote[row][col].includes(val)) {
+                n++
+                auxArr.push(spanArr[row * 9 + col])
+                if (n == 1) {
+                  row1 = row
+                  col1 = col
+                }
+                if (n == 2) {
+                  row2 = row
+                  col2 = col
+                }
+                if (n == 3) {
+                  row3 = row
+                  col3 = col
+                }
+              }
+            }
+          }
+          if (n == 2) {
+            console.log(n);
+            if (row1 == row2) {
+              let flag = false
+              for (let j = 0; j < 9; j++) {
+                if (j == col1 || j == col2) continue
+                if (boardNote[row1][j].includes(val)) {
+                  boardNote[row1][j] = boardNote[row1][j].filter(item => item != val)
+                  auxArr.push(spanArr[row1 * 9 + j])
+                  flag = true
+                }
+              }
+              if (flag) {
+                if (val == 2) console.log({ val, str: '行', n, auxArr });
+                return { val, str: '行', n, auxArr }
+              }
+
+            }
+            else if (col1 == col2) {
+              let flag = false
+              for (let i = 0; i < 9; i++) {
+                if (i == row1 || i == row2) continue
+                if (boardNote[i][col1].includes(val)) {
+                  boardNote[i][col1] = boardNote[i][col1].filter(item => item != val)
+                  auxArr.push(spanArr[i * 9 + col1])
+                  flag = true
+                }
+              }
+              if (flag) {
+                return { val, str: '列', n, auxArr }
+              }
+
+            }
+          }
+          if (n == 3) {
+            console.log(n);
+            if (row1 == row2 && row2 == row3) {
+              let flag = false
+              for (let j = 0; j < 9; j++) {
+                if (j == col1 || j == col2 || j == col3) continue
+                if (boardNote[row1][j].includes(val)) {
+                  boardNote[row1][j] = boardNote[row1][j].filter(item => item != val)
+                  auxArr.push(spanArr[row1 * 9 + j])
+                  flag = true
+                }
+              }
+              if (flag) {
+                return { val, str: '行', n, auxArr }
+              }
+
+            }
+            else if (col1 == col2 && col2 == col3) {
+              let flag = false
+              for (let i = 0; i < 9; i++) {
+                if (i == row1 || i == row2 || i == row3) continue
+                if (boardNote[i][col1].includes(val)) {
+                  boardNote[i][col1] = boardNote[i][col1].filter(item => item != val)
+                  auxArr.push(spanArr[i * 9 + col1])
+                  flag = true
+                }
+              }
+              if (flag) {
+                return { val, str: '列', n, auxArr }
+              }
+            }
+          }
+        }
+      }
+    }
+    console.log(boardNote);
+
+    return { val: -1, str: '', n: 0, auxArr: '' }
+  }
+  // 唯一余数
+  function NakedSingle() {
+    let val
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        if (boardNote[row][col].length == 1) {
+          return { row, col, Span: spanArr[row * 9 + col], val: boardNote[row][col][0] }
+        }
+      }
+    }
+    return { Span: -1, val: -1 }
+  }
+  // 显性数对
+  function NakedPaired() {
+    // 行检测
+    for (let row = 0; row < 9; row++) {
+      let auxArr = []
+      let auxArr2 = []
+      let spanArr1 = []
+      let spanArr2 = []
+      let val1, val2, str, row1, row2
+      for (let col = 0; col < 9; col++) {
+        if (boardNote[row][col].length == 2) {
+          auxArr.push(boardNote[row][col])
+          // console.log(boardNote[row][col]);
+        }
+      }
+      if (auxArr.length >= 2) {
+        for (let i = 0; i < auxArr.length; i++) {
+          for (let j = i + 1; j < auxArr.length; j++) {
+            if (auxArr[i][0] == auxArr[j][0] && auxArr[i][1] == auxArr[j][1]) {
+              auxArr2.push(auxArr[i])
+              auxArr2.push(auxArr[j])
+            }
+          }
+
+        }
+        if (auxArr2.length == 2) {
+          val1 = auxArr2[0][0]
+          val2 = auxArr2[0][1]
+          str = '行'
+          let n = 0
+          for (let i = 0; i < 9; i++) {
+            if (boardNote[row][i].includes(val1) && boardNote[row][i].includes(val2) && boardNote[row][i].length == 2) {
+              n++
+              if (n == 1) row1 = i
+              if (n == 2) row2 = i
+            }
+          }
+          for (let i = 0; i < 9; i++) {
+            if (boardNote[row][i].length >= 2 && i !== row1 && i != row2) {
+              if (boardNote[row][i].includes(auxArr2[0][0])) {
+                let index = boardNote[row][i].indexOf(val1)
+                boardNote[row][i].splice(index, 1)
+                spanArr1.push(spanArr[row * 9 + i])
+              }
+              if (boardNote[row][i].includes(auxArr2[0][1])) {
+                let index = boardNote[row][i].indexOf(val2)
+                boardNote[row][i].splice(index, 1)
+                spanArr1.push(spanArr[row * 9 + i])
+              }
+            }
+            if (boardNote[row][i].length == 2) {
+              if (boardNote[row][i].includes(auxArr2[0][0]) && boardNote[row][i].includes(auxArr2[0][1])) {
+                spanArr2.push(spanArr[row * 9 + i])
+              }
+            }
+          }
+          if (spanArr1.length) {
+            return { spanArr1, spanArr2, auxArr2, val1, val2, str }
+          }
+        }
+      }
+
+    }
+
+    // 列检测
+    for (let col = 0; col < 9; col++) {
+      let auxArr = []
+      let auxArr2 = []
+      let spanArr1 = []
+      let spanArr2 = []
+      let val1, val2, str, col1, col2
+      for (let row = 0; row < 9; row++) {
+        if (boardNote[row][col].length == 2) {
+          auxArr.push(boardNote[row][col])
+        }
+      }
+      if (auxArr.length >= 2) {
+        for (let i = 0; i < auxArr.length; i++) {
+          for (let j = i + 1; j > auxArr.length; j++) {
+            if (auxArr[i][0] == auxArr[j][0] && auxArr[i][1] == auxArr[j][1]) {
+              auxArr2.push(auxArr[i])
+              auxArr2.push(auxArr[j])
+            }
+          }
+
+        }
+        if (auxArr2.length == 2) {
+          val1 = auxArr2[0][0]
+          val2 = auxArr2[0][1]
+          str = '列'
+          let n = 0
+          for (let i = 0; i < 9; i++) {
+            if (boardNote[i][col].includes(val1) && boardNote[i][col].includes(val2) && boardNote[i][col].length == 2) {
+              n++
+              if (n == 1) col1 = i
+              if (n == 2) col2 = i
+
+            }
+          }
+          for (let i = 0; i < 9; i++) {
+            if (boardNote[i][col].length >= 2 && i != col1 && i != col2) {
+              if (boardNote[i][col].includes(auxArr2[0][0])) {
+                let index = boardNote[i][col].indexOf(val1)
+                boardNote[i][col].splice(index, 1)
+                spanArr1.push(spanArr[i * 9 + col])
+              }
+              if (boardNote[i][col].includes(auxArr2[0][1])) {
+                let index = boardNote[i][col].indexOf(val2)
+                boardNote[i][col].splice(index, 1)
+                spanArr1.push(spanArr[i * 9 + col])
+              }
+            }
+            if (boardNote[i][col].length == 2) {
+              if (boardNote[i][col].includes(auxArr2[0][0]) && boardNote[i][col].includes(auxArr2[0][1])) {
+                spanArr2.push(spanArr[i * 9 + col])
+              }
+            }
+          }
+          if (spanArr1.length) {
+            return { spanArr1, spanArr2, auxArr2, val1, val2, str }
+          }
+        }
+      }
+    }
+    return { spanArr1: -1, spanArr2: -1, auxArr2: -1, val1: -1, val2: -1, str: -1 }
+  }
+  // 隐形数对
+  // function HiddenPair(){
+  //   let auxArr=new Array(3)
+  //   for(let i=0;i<3;i++)
+  //   {
+  //     auxArr[i]=new Array(3)
+  //     for(let j=0;j<3;j++)
+  //     {
+  //       auxArr[i][j]=new Array(9)
+  //       for(let k=0;k<9;k++)
+  //       {
+  //         auxArr[i][j][k]=[]
+  //       }
+  //     }
+  //   }
+  //   for(let boxRow=0;boxRow<3;boxRow++)
+  //   {
+  //     for(let boxCol=0;boxCol<3;boxCol++)
+  //     {
+  //       for(let k=0;k<9;k++)
+  //       {
+  //         for(let row=boxRow*3;row<boxRow*3+3;row++)
+  //         {
+  //           for(let col=boxCol*3;col<boxCol*3+3;col++)
+  //           {
+  //             let val=k+1
+  //             if(boardNote[row][col].includes(val)){
+  //               let obj={row,col,val}
+  //               auxArr[boxRow][boxCol][k].push(obj)
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+
+  //   for(let boxRow=0;boxRow<3;boxRow++)
+  //   {
+  //     for(let boxCol=0;boxCol<3;boxCol++)
+  //     {
+  //       let n=0
+  //       let auxArr2=[]
+  //       let auxArr3=[]
+  //       for(let k=0;k<9;k++)
+  //       {
+  //         if(auxArr[boxRow][boxCol][k].length==2){
+  //           auxArr2[n++]=auxArr[boxRow][boxCol][k]
+  //         }
+  //       }
+  //       if(n>=2){
+  //         for(let i=0;i<n;i++)
+  //         {
+  //           for(let j=i+1;j<n;j++)
+  //           {
+  //             if(auxArr2[i][0].row==auxArr2[j][0].row&&auxArr2[i][0].col==auxArr2[j][0].colauxArr2[i][1].row==auxArr2[j][1].row&&auxArr2[i][1].col==auxArr2[j][1].col){
+  //               let {row1,col1,val1}=auxArr2[i][0]
+  //               let {row2,col2,val2}=auxArr2[j][1]
+  //               let flag=false
+  //               if(boardNote[row1][col1].length>2){
+  //                 boardNote[row1][col1]=boardNote[row1][col1].filter(item=>item==val1||item==val2)
+  //                 falg=true
+  //               }
+  //               if(boardNote[row2][col2].length>2){
+  //                 boardNote[row1][col1]=boardNote[row1][col1].filter(item=>item==val1||item==val2)
+  //                 flag=true
+  //               }
+  //               if(flag){
+  //                 auxArr3.push(spanArr[row1*9+col1])
+  //                 auxArr3.push(spanArr[row2*9+col2])
+  //                 return {row1,col1,val1,row2,col2,val2,auxArr3}
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+  //   return {row1:-1,col1,val1,row2,col2,val2,auxArr3}
+  // }
+  function HiddenPair() {
+    for (let boxRow = 0; boxRow < 3; boxRow++) {
+      for (let boxCol = 0; boxCol < 3; boxCol++) {
+        let auxArr = []
+        // 记录主
+        let spanArr2 = []
+        // 记录次
+        let spanArr3 = []
+        for (let row = boxRow * 3; row < boxRow * 3 + 3; row++) {
+          for (let col = boxCol * 3; col < boxCol * 3 + 3; col++) {
+            if (boardNote[row][col].length == 2) {
+              auxArr.push(boardNote[row][col])
+            }
+          }
+        }
+        for (let i = 0; i < auxArr.length; i++) {
+          for (let j = i + 1; j < auxArr.length; j++) {
+            if (auxArr[i][0] == auxArr[j][0] && auxArr[i][1] == auxArr[j][1]) {
+              let flag = false
+              for (let row = boxRow * 3; row < boxRow * 3 + 3; row++) {
+                for (let col = boxCol * 3; col < boxCol * 3 + 3; col++) {
+                  if (boardNote[row][col].length > 2) {
+                    if (boardNote[row][col].includes(auxArr[i][0]) || auxArr[i][1]) {
+                      spanArr3.push(spanArr[row * 9 + col])
+                      falg = true
+                    }
+                  }
+                  if (boardNote[row][col].length == 2) {
+                    if (boardNote[row][col].includes(auxArr[i][0])) {
+                      spanArr2.push(spanArr[row * 9 + col])
+                    }
+                  }
+                }
+              }
+              if (flag) {
+                return { spanArr2, spanArr3 }
+              }
+            }
+          }
+        }
+      }
+    }
+    return { spanArr2: -1, spanArr3 }
+  }
+  // X-Wing
+  function XWing() {
+    for (let val = 1; vai <= 9; vai++) {
+      let isFind = false
+      let i1_1 = i1_2 = i2_1 = i2_2
+      let j1_1 = j1_2 = j2_1 = j2_2
+      let auxArr1 = auxArr2 = []
+      for (let row = 0; row < 9; row++) {
+        let n = 0
+        for (let col = 0; col < 9; col++) {
+          if (boardNote[row][col].includes(val)) {
+            n++
+            if (!isFind) {
+              if (n == 1) {
+                i1_1 = row
+                j1_1 = col
+              }
+              if (n == 2) {
+                i1_2 = row
+                j1_2 = col
+              }
+            }
+            else {
+              if (n == 1) {
+                i2_1 = row
+                j2_1 = col
+              }
+              if (n == 2) {
+                i2_2 = row
+                j2_2 = col
+              }
+            }
+          }
+        }
+        if (n == 2) {
+          if (!isFind) {
+            isFind = true
+          }
+          else {
+            if (j1_1 == j2_1 && j1_2 == j2_2) {
+              for (let k = 0; k < 9; k++) {
+                if (k == i1_1 || k == i2_1) continue
+                if (boardNote[k][j1_1].includes(val)) {
+                  auxArr2.push(spanArr[k * 9 + j1_1])
+                }
+                if (boardNote[k][j1_2].includes(val)) {
+                  auxArr2.push(spanArr[k * 9 + j1_1])
+                }
+              }
+              if (!auxArr2.length) {
+
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  function difficultyRatio() {
+    n1 = n2 = n3 = n4 = n5 = n6 = n7 = 0
+    while (!testAll()) {
+      let flag = false
+      // 满汉全席1
+      if (true) {
+        let { row, col, val, Span } = FullHouse()
+        if (row != -1) {
+          board_test[row][col] = true
+          add(row, col, val)
+          show()
+          refreshBoardNote()
+          n1++
+          flag = true
+          continue
+        }
+
+      }
+      // 摒除法检测2
+      if (true) {
+        let { val, row, col, Span, auxArr, auxArr3 } = abandon()
+        if (val != -1) {
+          if (auxArr) {
+            // spanArr[row*9+col].classList
+            board_test[row][col] = true
+            add(row, col, val)
+            refreshBoardNote()
+            n2++
+            flag = true
+            continue
+          }
+        }
+
+
+      }
+      // 余差法检测3
+      if (true) {
+        let { row, col, val, arr2, span } = exclude()
+        if (row != -1) {
+          board_test[row][col] = true
+          let numArr = []
+          add(row, col, val)
+          refreshBoardNote()
+          n3++
+          flag = true
+          continue
+        }
+      }
+      // 隐藏单数4
+      if (true) {
+        let { row, col, Span, str, auxArr } = HiddenSingle()
+        if (row != -1) {
+          board_test[row][col] = true
+          add(row, col, val)
+          refreshBoardNote()
+          n4++
+          flag = true
+          continue
+        }
+      }
+      // 区块摒除法检测5
+      if (true) {
+        let { val, str, n, auxArr } = BlockAbandon()
+        if (val != -1) {
+
+          n5++
+          flag = true
+          continue
+
+        }
+      }
+      // 唯一余数检测6
+      if (true) {
+        let { row, col, Span, val } = NakedSingle()
+        if (Span != -1) {
+          board_test[row][col] = true
+          boardNote[row][col] = boardNote[row][col].filter(item => item != val)
+          add(row, col, val)
+          refreshBoardNote()
+          n6++
+          flag = true
+          continue
+        }
+      }
+      // 显性数对
+      if (true) {
+        let { spanArr1, spanArr2, auxArr2, val1, val2, str } = NakedPaired()
+        if (spanArr1 != -1) {
+          n7++
+          flag = true
+          continue
+        }
+      }
+      if (!flag) return false
+    }
+    console.log((`满汉全席：${n1}摒除法：${n2}余差法：${n3}隐藏单数：${n4}区块摒除：${n5}唯一余数：${n6}`));
+    return true
+
+  }
+
+  let prompt = document.querySelector('.prompt')
+  let prompt2 = document.querySelector('.prompt2')
+  let isWork = false
+  prompt.addEventListener('click', function () {
+
+    if (!isWork) {
+      isWork = true
+      // 满汉全席
+      if (true) {
+        let { row, col, val, Span } = FullHouse()
+        if (row != -1) {
+          prompt2.innerHTML = `满汉全席:<br>注意此单元格所在的区域，已有8个不同的数字在宫中使用，唯一缺少的数字是
+    ${val},因此此单元格只能是${val}`
+          prompt2.style.display = 'block'
+          board_test[row][col] = true
+          Span.classList.add('centerActive')
+          setTimeout(() => {
+            Span.classList.remove('centerActive')
+            Span.innerHTML = val
+            add(row, col, val)
+            prompt2.style.display = 'none'
+            isWork = false
+            show()
+            refreshBoardNote()
+            if (isHasNote) {
+              NoteShow()
+            }
+            isWork = false
+            if (testAll()) {
+              alert('您已通关！')
+            }
+          }, 2000);
+          return
+        }
+
+      }
+      // 摒除法检测
+      if (true) {
+        let { val, row, col, Span, auxArr, auxArr3 } = abandon()
+        if (val != -1) {
+          if (auxArr) {
+            for (let span of auxArr3) {
+              span.classList.add('promptActive')
+            }
+            prompt2.innerHTML = `摒除法:<br>注意这些单元格所在的区域不能填${val},而这一宫内只有${val}未填`
+            prompt2.style.display = 'block'
+            Span.classList.add('centerActive')
+            setTimeout(() => {
+              board_test[row][col] = true
+              for (let span of auxArr3) {
+                span.classList.remove('promptActive')
+              }
+              Span.classList.remove('centerActive')
+              Span.innerHTML = val
+              add(row, col, val)
+              prompt2.style.display = 'none'
+              isWork = false
+              show()
+              refreshBoardNote()
+              if (isHasNote) {
+                NoteShow()
+                isWork = false
+              }
+              if (testAll()) {
+                alert('您已通关！')
+              }
+            }, 2000);
+
+            return
+          }
+          else {
+            console.log('不能用摒除法！');
+
+          }
+        }
+
+
+      }
+      // 余差法检测
+      if (true) {
+        let { row, col, val, arr2, span } = exclude()
+
+        if (row != -1) {
+          board_test[row][col] = true
+          let numArr = []
+          for (let i = 0; i < arr2.length; i++) {
+            arr2[i].classList.add('promptActive')
+            if (!numArr.includes(arr2[i].innerHTML)) {
+              numArr.push(arr2[i].innerHTML)
+            }
+          }
+          prompt2.innerHTML = `余差法:<br>注意此单元格所在的区域，已有8个不同的数字在行、列或宫中使用，唯一缺少的数字是
+    ${val},因此此单元格只能是${val}`
+          prompt2.style.display = 'block'
+          span.classList.add('centerActive')
+          setTimeout(() => {
+            for (let i = 0; i < arr2.length; i++) {
+              arr2[i].classList.remove('promptActive')
+            }
+            span.classList.remove('centerActive')
+            span.innerHTML = val
+            add(row, col, val)
+            prompt2.style.display = 'none'
+            isWork = false
+            show()
+            refreshBoardNote()
+            if (isHasNote) {
+              NoteShow()
+            }
+            isWork = false
+            if (testAll()) {
+              alert('您已通关！')
+            }
+          }, 2000);
+          return
+        }
+        else {
+          console.log('不能用余差法！');
+
+        }
+      }
+      // 笔记法
+      if (!isHasNote) {
+        isHasNote = true
+        NoteShow()
+        isWork = false
+        return
+      }
+      // 隐藏单数
+      if (true) {
+        let { row, col, Span, str, auxArr } = HiddenSingle()
+        if (row != -1) {
+          board_test[row][col] = true
+          for (let span of auxArr) {
+            span.classList.add('promptActive')
+          }
+          Span.classList.add('centerActive')
+          prompt2.innerHTML = `隐藏单数:<br>注意此单元格所在的${str}，只有${val}能填在此${str}`
+          prompt2.style.display = 'block'
+          setTimeout(() => {
+            for (let span of auxArr) {
+              span.classList.remove('promptActive')
+            }
+            Span.classList.remove('centerActive')
+            Span.innerHTML = val
+            add(row, col, val)
+            prompt2.style.display = 'none'
+            isWork = false
+            show()
+            refreshBoardNote()
+            NoteShow()
+            if (testAll()) {
+              alert('您已通关！')
+            }
+
+          }, 2000);
+          return
+
+        }
+      }
+      // 区块摒除法检测
+      if (true) {
+        let { val, str, n, auxArr } = BlockAbandon()
+        if (val != -1) {
+          for (let i = 0; i < auxArr.length; i++) {
+            if (i < n) {
+              auxArr[i].classList.add('promptActive')
+            }
+            else {
+              auxArr[i].classList.add('mistake')
+            }
+          }
+          prompt2.innerHTML = `区块摒除法:<br>注意此宫内已有${n}个格子候选值为${val}，无论填哪个格子，此${str}上都不能出现值${val}`
+          prompt2.style.display = 'block'
+          setTimeout(() => {
+            for (let i = 0; i < auxArr.length; i++) {
+              if (i < n) {
+                auxArr[i].classList.remove('promptActive')
+              }
+              else {
+                auxArr[i].classList.remove('mistake')
+              }
+            }
+            prompt2.style.display = 'none'
+            NoteShow()
+            isWork = false
+            if (testAll()) {
+              alert('您已通关！')
+            }
+          }, 2000);
+
+          return
+        }
+      }
+      // 唯一余数检测
+      if (true) {
+        let { row, col, Span, val } = NakedSingle()
+        if (Span != -1) {
+          board_test[row][col] = true
+          boardNote[row][col] = boardNote[row][col].filter(item => item != val)
+          Span.classList.add('promptActive')
+          prompt2.innerHTML = `唯一余数:<br>注意此格子内只有${val}可填`
+          prompt2.style.display = 'block'
+          setTimeout(() => {
+            add(row, col, val)
+            refreshBoardNote()
+            show()
+            NoteShow()
+            Span.classList.remove('promptActive')
+            prompt2.style.display = 'none'
+            isWork = false
+            if (testAll()) {
+              alert('您已通关！')
+            }
+          }, 2000);
+          return
+        }
+      }
+      // 显性数对
+      if (true) {
+        let { spanArr1, spanArr2, auxArr2, val1, val2, str } = NakedPaired()
+        if (spanArr1 != -1) {
+          for (let span of spanArr1) {
+            span.classList.add('mistake')
+          }
+          for (let span of spanArr2) {
+            span.classList.add('promptActive')
+          }
+          prompt2.innerHTML = `显性数对:<br>注意此${str}只有两个位置可填${val1},${val2},因此其他位置排除这两个值`
+          prompt2.style.display = 'block'
+          setTimeout(() => {
+            refreshBoardNote()
+            show()
+            NoteShow()
+            for (let span of spanArr1) {
+              span.classList.remove('mistake')
+            }
+            for (let span of spanArr2) {
+              span.classList.remove('promptActive')
+            }
+            prompt2.style.display = 'none'
+            isWork = false
+            if (testAll()) {
+              alert('您已通关！')
+            }
+          }, 2000);
+          return
+        }
+      }
+      // // 隐形数对
+      // if(true){
+      //   let {spanArr2,spanArr3}=HiddenPair()
+      //   if (spanArr2 != -1) {
+      //     for (let span of auxArr3) {
+      //       span.classList.add('mistake')
+      //     }
+      //     prompt2.innerHTML = `隐藏数对:<br>注意此格子内只有${val}可填`
+      //     prompt2.style.display = 'block'
+      //   }
+
+      // }
+
+    }
+
+
+
+  })
+  // 评估算法
+  let sumNodes = 0
+  let ratio = 0
+  let solution = 0
+  function evaluateSudokuDifficulty(sudoku) {
+    sumNodes = 0
+    ratio = 0
+    // 将数独转化为一维数组
+    const board = sudoku.flat();
+    // 计算空格数量
+    const numEmptyCells = board.filter((cell) => cell === 0).length;
+    // 使用递归算法解决数独，并返回搜索树信息
+    const { numNodes, numPaths, maxDepth, ValidNodes, inValidNodes } = solveSudokuRecursive(board, 0);
+    // console.log(ValidNodes+inValidNodes);
+    sumNodes = ValidNodes + inValidNodes
+    ratio = ValidNodes / (ValidNodes + inValidNodes)
+    console.log('总次数：' + sumNodes);
+    console.log('难度系数：' + ratio);
+    console.log('方程解數量：' + solution);
+
+    return
+    // 计算有效路径比例
+    const branchingFactor = numNodes / numPaths;
+    const effectiveBranchingFactor = (branchingFactor - 1) * numPaths / (numNodes - numPaths);
+    const effectivePathRatio = Math.pow(effectiveBranchingFactor, maxDepth);
+    // 计算难度评价值
+    const difficulty = 2 + 0.01 * numEmptyCells + Math.log10(numNodes) + Math.log10(effectivePathRatio);
+    return difficulty;
+  }
+
+  // 使用递归算法解决数独，并返回搜索树信息
+  function solveSudokuRecursive(board, index) {
+    // 边界情况：如果解决完所有空格，则返回搜索树信息
+    if (index >= board.length) {
+      solution++
+      return { numNodes: 0, numPaths: 1, maxDepth: 0, inValidNodes: 0, ValidNodes: 0 };
+    }
+    // 计算下一个空格的位置
+    while (board[index] !== 0) {
+      index++;
+      if (index == 81) {
+        solution++
+        return { numNodes: 0, numPaths: 1, maxDepth: 0, inValidNodes: 0, ValidNodes: 0 };
+      }
+    }
+
+    // 使用回溯法尝试填写数字，统计搜索树信息
+    let numNodes = 1;             // 搜索树节点数
+    let numPaths = 0;             // 有效路径数
+    let maxDepth = 0;             // 搜索树深度
+    let inValidNodes = 0
+    let ValidNodes = 0
+    const candidates = getCandidates(board, index);
+    for (let i = 0; i < candidates.length; i++) {
+      if (index == 79) {
+      }
+      board[index] = candidates[i];
+      const { numNodes: childNodes, numPaths: childPaths, maxDepth: childDepth, inValidNodes: childinValidNodes, ValidNodes: childValidNodes } = solveSudokuRecursive(board, index + 1);
+      ValidNodes += childValidNodes
+      inValidNodes += childinValidNodes
+      numNodes += childNodes;
+      numPaths += childPaths;
+      maxDepth = Math.max(maxDepth, childDepth);
+    }
+
+    // 如果当前节点没有有效子节点，则视为死胡同
+    if (numPaths === 0) {
+      inValidNodes++
+    } else {
+      numPaths = Math.max(1, numPaths);  // 避免分母为零
+      maxDepth++;
+      ValidNodes++
+    }
+    // 回溯
+    board[index] = 0;
+    return { numNodes, numPaths, maxDepth, ValidNodes, inValidNodes };
+  }
+
+  // 获取指定位置的候选数字
+  function getCandidates(board, index) {
+    // 计算所在区块的行号和列号
+    const row = Math.floor(index / 9);
+    const col = index % 9;
+    const blockRow = Math.floor(row / 3);
+    const blockCol = Math.floor(col / 3);
+    // 初始化候选数字
+    const candidates = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    // 检查所在行、所在列和所在区块中已经出现的数字
+    for (let i = 0; i < 9; i++) {
+      const rowValue = board[row * 9 + i];
+      const colValue = board[i * 9 + col];
+      const blockValue = board[(blockRow * 3 + Math.floor(i / 3)) * 9 + blockCol * 3 + (i % 3)];
+      candidates[rowValue - 1] = 0;
+      candidates[colValue - 1] = 0;
+      candidates[blockValue - 1] = 0;
+    }
+    // 过滤掉已经出现过的数字
+    return candidates.filter((value) => value !== 0);
+  }
+
+
+
+  // 区分难易度
+  let easy = document.querySelector('.easy')
+  let middle = document.querySelector('.middle')
+  let hard = document.querySelector('.hard')
+  easy.addEventListener('click', function () {
+    initialization()
+    random()
+    solveSudoku(board);
+    target = board.map(item => [...item])
+    dig1()
+    record()
+    evaluateSudokuDifficulty(board)
+    let auxBoard = deepcopy(board)
+    isFirst = false
+    refreshBoardNote()
+    difficultyRatio()
+    while (solution != 1 || (n1 + n2) / (n1 + n2) != 1 || n1 + n2 != 40) {
+      initialization()
+      random()
+      solveSudoku(board);
+      target = board.map(item => [...item])
+      dig1()
+      auxBoard = deepcopy(board)
+      record()
+      isFirst = false
+      refreshBoardNote()
+      difficultyRatio()
+      evaluateSudokuDifficulty(board)
+      console.log(solution);
+    }
+    board = deepcopy(auxBoard)
+    show()
+    record()
+    numShow()
+    isFirst = false
+    refreshBoardNote()
+    console.log('over');
+    console.log((`满汉全席：${n1}摒除法：${n2}余差法：${n3}隐藏单数：${n4}区块摒除：${n5}唯一余数：${n6}`));
+  })
+
+  middle.addEventListener('click', function () {
+    initialization()
+    random()
+    solveSudoku(board);
+    target = board.map(item => [...item])
+    dig2()
+    record()
+    evaluateSudokuDifficulty(board)
+    let auxBoard = deepcopy(board)
+    isFirst = false
+    refreshBoardNote()
+    difficultyRatio()
+
+    while (solution != 1 || (n1 + n2 + n3 + n4 + n5 + n6 + n7) != 50 || n3 == 0) {
+      initialization()
+      random()
+      solveSudoku(board);
+      target = board.map(item => [...item])
+      dig2()
+      auxBoard = deepcopy(board)
+      record()
+      isFirst = false
+      refreshBoardNote()
+      difficultyRatio()
+      evaluateSudokuDifficulty(board)
+      if (ratio == 0) break
+    }
+    board = deepcopy(auxBoard)
+    show()
+    record()
+    numShow()
+    isFirst = false
+    refreshBoardNote()
+
+    console.log('over');
+    console.log((`满汉全席：${n1}摒除法：${n2}余差法：${n3}隐藏单数：${n4}区块摒除：${n5}唯一余数：${n6} 显性数对：${n7}`));
+
+  })
+
+  hard.addEventListener('click', function () {
+    let flag = false
+    initialization()
+    random()
+    solveSudoku(board);
+    target = board.map(item => [...item])
+    dig3()
+    record()
+    evaluateSudokuDifficulty(board)
+    let auxBoard = deepcopy(board)
+    isFirst = false
+    refreshBoardNote()
+    flag = difficultyRatio()
+    while (solution != 1 || n5 == 0 || !flag) {
+      initialization()
+      random()
+      solveSudoku(board);
+      target = board.map(item => [...item])
+      dig3()
+      auxBoard = deepcopy(board)
+      record()
+      isFirst = false
+      refreshBoardNote()
+      flag = difficultyRatio()
+      evaluateSudokuDifficulty(board)
+    }
+    board = deepcopy(auxBoard)
+    isFirst = false
+    show()
+    record()
+    numShow()
+    refreshBoardNote()
+
+    console.log('over');
+    console.log((`满汉全席：${n1}摒除法：${n2}余差法：${n3}隐藏单数：${n4}区块摒除：${n5}唯一余数：${n6}显性数对：${n7}`));
+
+
+  })
+  // 防止一个宫内全部为空
+  function testPalace() {
+    for (let boxRowStart = 0; boxRowStart < 3; boxRowStart++) {
+      for (let boxColStart = 0; boxColStart < 3; boxColStart++) {
+        let flag = false
+        for (let i = boxRowStart; i < boxRowStart + 3; i++) {
+          for (let j = boxColStart; j < boxColStart + 3; j++) {
+            if (board[i][j]) {
+              flag = true
+            }
+          }
+        }
+        if (flag == false) return false
+      }
+    }
+    return true
+  }
+  // 数组初始化
+  function initialization() {
+    isHasNote = false
+    boardNote = Array.from({ length: 9 }, () => Array(9).fill(0))
+    num = 0
+    numShow()
+    isWork = false
+    solution = 0
+    action = []
+    isNote = false
+    isClear = false
+    for (let j = 0; j < numspanArr.length; j++) {
+      numspanArr[j].classList.remove('active')
+    }
+    board = Array.from({ length: 9 }, () => Array(9).fill(0))
+    board_test = Array.from({ length: 9 }, () => Array(9).fill(0))
+  }
+
+  // 记录笔记数组
+  function refreshBoardNote() {
+    boardNote2 = Array.from({ length: 9 }, () => Array(9).fill(0))
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 9; col++) {
+        let candidates = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        if (board[row][col]) {
+          boardNote2[row][col] = []
+        }
+        else {
+          const blockRow = Math.floor(row / 3);
+          const blockCol = Math.floor(col / 3);
+          for (let i = 0; i < 9; i++) {
+            const rowValue = board[row][i];
+            const colValue = board[i][col];
+            const blockValue = board[blockRow * 3 + Math.floor(i / 3)][blockCol * 3 + i % 3];
+            candidates[rowValue - 1] = 0;
+            candidates[colValue - 1] = 0;
+            candidates[blockValue - 1] = 0;
+          }
+          boardNote2[row][col] = candidates.filter((value) => value != 0)
+        }
+      }
+    }
+    if (!isFirst) {
+      boardNote = deepcopy(boardNote2)
+      isFirst = true
+    }
+    else {
+      mergeBoardNote()
+    }
+  }
+  // 笔记数组取交集
+  function mergeBoardNote() {
+    let boardNote3 = Array.from({ length: 9 }, () => Array(9).fill(0))
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        boardNote3[i][j] = []
+      }
+    }
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        for (let val = 1; val <= 9; val++) {
+          if (boardNote[i][j].includes(val) && boardNote2[i][j].includes(val)) {
+            boardNote3[i][j].push(val)
+          }
+        }
+        boardNote3[i][j].sort()
+      }
+    }
+    boardNote = deepcopy(boardNote3)
+  }
+  // 深拷贝
+  function deepcopy(obj) {
+    var out = [], i = 0, len = obj.length;
+    for (; i < len; i++) {
+      if (obj[i] instanceof Array) {
+        out[i] = deepcopy(obj[i]);
+      }
+      else out[i] = obj[i];
+    }
+    return out;
+  }
+  // 检测是否为最终位置
+  function isTarget(row, col, num) {
+    if (target[row][col] == num) return true
+    return false
+
+  }
+
+  let test2 = document.querySelector('.test2')
+  test2.addEventListener('click', function () {
+    isFirst = false
+    board = [
+      [0, 0, 0, 0, 0, 0, 0, 3, 0],
+      [0, 5, 3, 6, 0, 0, 0, 0, 0],
+      [0, 6, 0, 0, 3, 5, 9, 4, 2],
+      [1, 0, 0, 0, 2, 3, 0, 6, 0],
+      [0, 0, 0, 0, 8, 0, 0, 0, 0],
+      [0, 7, 0, 5, 9, 0, 0, 0, 3],
+      [4, 9, 7, 3, 0, 0, 0, 8, 0],
+      [0, 0, 0, 0, 0, 4, 3, 2, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    ]
+    refreshBoardNote()
+    record()
+    show()
+  })
+  console.log(boardNote);
+  console.log(boardNote2);
+
+  let a = [1, 2]
+  let b = []
+  b.push(a)
+  console.log(b);
+
+</script>
+
+</html>

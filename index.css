@@ -1,0 +1,269 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+.bigmain {
+  position: relative;
+  width: 1000px;
+  height: 800px;
+  margin: auto;
+  background-color: #FFFEE2;
+}
+.bigmain .side {
+  float: right;
+  width: 100px;
+  height: 500px;
+  margin-right: 100px;
+}
+.bigmain .side .restart {
+  width: 80px;
+  height: 30px;
+  border-radius: 5px;
+  border: none;
+}
+.bigmain .side .restart:hover {
+  cursor: pointer;
+  opacity: 0.8;
+}
+.bigmain .prompt2 {
+  display: none;
+  transition: all 1s;
+  width: 200px;
+  height: 500px;
+  position: absolute;
+  right: 30px;
+  top: 100px;
+  font-size: 20px;
+}
+.bigmain .grade {
+  width: 200px;
+  height: 500px;
+  top: 100px;
+  left: 50px;
+  position: absolute;
+}
+.bigmain .grade button {
+  width: 100px;
+  margin-top: 50px;
+}
+.top {
+  width: 450px;
+  height: 80px;
+  margin: auto;
+  text-align: center;
+  color: #BF6D24;
+  font-weight: 800;
+}
+.top .title {
+  display: inline-block;
+  margin: auto;
+  text-align: center;
+  font-size: 30px;
+}
+.top ul {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+.top ul li {
+  list-style: none;
+  float: left;
+}
+.main {
+  width: 456px;
+  height: 445px;
+  border: 3px solid #CB8732;
+  display: flex;
+  flex-wrap: wrap;
+  margin: auto;
+  float: left;
+  margin-left: 270px;
+  margin-top: 20px;
+}
+.main span {
+  border: 1px solid #EEDEB3;
+  width: 50px;
+  height: 49px;
+  text-align: center;
+  line-height: 45px;
+  display: inline-block;
+  margin-bottom: 0;
+  font-size: 25px;
+  align-content: space-between;
+  color: #935E36;
+}
+.main span span {
+  display: inline-block;
+  float: left;
+  width: 15.3333333px;
+  height: 16px;
+  border: none;
+  font-size: 10px;
+  color: #66abeb;
+  line-height: 14px;
+}
+.main span:nth-child(3),
+.main span:nth-child(6),
+.main span:nth-child(57),
+.main span:nth-child(12),
+.main span:nth-child(15),
+.main span:nth-child(60),
+.main span:nth-child(21),
+.main span:nth-child(24),
+.main span:nth-child(66),
+.main span:nth-child(30),
+.main span:nth-child(33),
+.main span:nth-child(69),
+.main span:nth-child(39),
+.main span:nth-child(42),
+.main span:nth-child(75),
+.main span:nth-child(48),
+.main span:nth-child(51),
+.main span:nth-child(78) {
+  border-right: 3px solid #CB8732;
+}
+.main span:nth-child(19),
+.main span:nth-child(20),
+.main span:nth-child(21),
+.main span:nth-child(22),
+.main span:nth-child(23),
+.main span:nth-child(24),
+.main span:nth-child(25),
+.main span:nth-child(26),
+.main span:nth-child(27),
+.main span:nth-child(48),
+.main span:nth-child(49),
+.main span:nth-child(50),
+.main span:nth-child(51),
+.main span:nth-child(52),
+.main span:nth-child(53),
+.main span:nth-child(54),
+.main span:nth-child(47),
+.main span:nth-child(46) {
+  border-bottom: 3px solid #CB8732;
+}
+.main span:nth-child(80),
+.main span:nth-child(79),
+.main span:nth-child(78),
+.main span:nth-child(77),
+.main span:nth-child(76),
+.main span:nth-child(75),
+.main span:nth-child(74),
+.main span:nth-child(73),
+.main span:nth-child(81) {
+  border-bottom: none;
+}
+.main span:hover {
+  cursor: default;
+}
+.main .playerActive {
+  color: #74B116;
+}
+.main .secondActive3 {
+  background-color: #FDEECF;
+}
+.main .mainActive3 {
+  background-color: #face77;
+}
+.main .active2 {
+  background-color: #74B116;
+  color: white;
+}
+.main .mistake {
+  background-color: #f33535;
+  color: white;
+}
+.main .promptActive {
+  background-color: #b18016;
+  color: white;
+  transition: all 1s;
+}
+.main .centerActive {
+  background-color: #1b03f7;
+  color: white;
+}
+.bottom1 {
+  width: 450px;
+  margin: auto;
+}
+.bottom1 ul {
+  float: left;
+  width: 450px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+.bottom1 ul li {
+  list-style: none;
+  font-size: 15px;
+  color: #BF6D24;
+  width: 50px;
+  height: 70px;
+  text-align: center;
+}
+.bottom1 ul li span {
+  width: 35px;
+  height: 35px;
+  display: inline-block;
+  transition: all 0.5s;
+}
+.bottom1 ul li span:hover {
+  cursor: default;
+}
+.bottom1 ul li .clear img {
+  width: 35px;
+  height: 35px;
+}
+.bottom1 ul li .clear:hover {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+.bottom1 ul li .back img {
+  width: 35px;
+  height: 35px;
+}
+.bottom1 ul li .back:hover {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+.bottom1 ul li .note img {
+  width: 35px;
+  height: 35px;
+}
+.bottom1 ul li .note:hover {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+.bottom1 ul li .prompt img {
+  width: 35px;
+  height: 35px;
+}
+.bottom1 ul li .prompt:hover {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+.bottom2 {
+  text-align: center;
+  float: left;
+  margin-left: 260px;
+  margin-top: 20px;
+}
+.bottom2 span {
+  font-size: 40px;
+  margin-right: 10px;
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  color: white;
+  border-radius: 50%;
+  border: none;
+  line-height: 35px;
+  color: #935E36;
+}
+.bottom2 .active {
+  background-image: linear-gradient(to left bottom, #b49a7b, #ece2c4);
+}
+.bottom2 span:hover {
+  cursor: default;
+}
