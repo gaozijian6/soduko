@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+</head>
+<body>
+    <h1>Welcome to the Home Page</h1>
+    <p>You have successfully logged in!</p>
+    <button id="logoutButton">Logout</button>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // 检查 JWT 令牌
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'index.html'; // 如果没有令牌，重定向到登录页面
+        } else {
+            // 验证令牌
+            axios.get('http://localhost:3000/protected', {
+                headers: {
+                    'Authorization': token
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.href = 'index.html'; // 如果发生错误，重定向到登录页面
+            });
+        }
+
+        document.getElementById('logoutButton').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            window.location.href = 'index.html'; // 注销后跳转回登录页
+        });
+    </script>
+</body>
+</html>
