@@ -54,35 +54,68 @@
       :show="showChat"
       :currentFriend="currentFriend"
       @close="closeChat"
+      :messages="messages"
+      @update:messages="updateMessages"
+      :sender_id="userId"
+      :receiver_id="selectedFriend"
     />
   </div>
 </template>
   
   <script setup>
 import axios from "axios";
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import ChatDialog from "./ChatDialog.vue";
 
-const token = localStorage.getItem("token");
-const userId = localStorage.getItem("userId");
-const username = ref(localStorage.getItem("username"));
-const newFriendRequest = ref(null);
 const router = useRouter();
+const route = useRoute();
+const userId = route.query.userId;
+const username = ref(route.query.username);
+const token = localStorage.getItem(`${userId}-token`);
+const newFriendRequest = ref(null);
 const friendName = ref("");
 const friendResult = ref(null);
 const friends = ref([]);
 const selectedFriend = ref(null);
 const showChat = ref(false);
 const currentFriend = ref(null);
-const newMessage = ref("");
 const showDialog = ref(false);
+const messages = ref([]);
+const ws = new WebSocket("ws://localhost:3000");
 
 onMounted(() => {
   accessProtectedRoute();
   fetchFriends();
   checkForFriendRequests(); // 查询新好友请求
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: "identify", userId })); // 发送用户标识信息
+  };
+
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === "message") {
+      messages.value.push({ id: Date.now(), text: data.text });
+      console.log(data.text);
+    }
+  };
 });
+
+onUnmounted(() => {
+  ws.close();
+});
+
+const updateMessages = (newMessages) => {
+  messages.value = newMessages;
+  ws.send(
+    JSON.stringify({
+      type: "message",
+      text: newMessages[newMessages.length - 1],
+      targetUserId: selectedFriend.value,
+    })
+  );
+};
 
 const startChatWithFriend = (friendId) => {
   selectFriend(friendId);
@@ -91,6 +124,9 @@ const startChatWithFriend = (friendId) => {
 
 const selectFriend = (friendId) => {
   selectedFriend.value = friendId;
+  currentFriend.value = friends.value.find(
+    (friend) => friend.id === selectedFriend.value
+  );
 };
 
 const showFriendRequestDialog = () => {
@@ -98,7 +134,6 @@ const showFriendRequestDialog = () => {
 };
 
 const startChat = () => {
-  console.log(selectedFriend.value);
   if (selectedFriend.value) {
     currentFriend.value = friends.value.find(
       (friend) => friend.id === selectedFriend.value
@@ -113,9 +148,7 @@ const closeChat = () => {
 };
 
 const logout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("userId");
-  localStorage.removeItem("username");
+  localStorage.removeItem(`${userId}-token`);
   router.push({ name: "login" });
 };
 

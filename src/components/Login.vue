@@ -30,11 +30,10 @@ const login = () => {
     .then((response) => {
       const data = response.data;
       if (data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("userId", data.userId);
-        localStorage.setItem("username", username.value);
+        const userId = data.userId;
+        localStorage.setItem(`${userId}-token`, data.token);
         alert("Login successful");
-        router.push({ name: "home" });
+        router.push({ name: "home", query: { userId, username: username.value } });
       } else {
         alert("Login failed: " + (data.message || "Invalid credentials"));
       }

@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const mysql = require('mysql2');
+const WebSocket = require('ws');
+const http = require('http');
+const { log } = require('console');
 
 const app = express();
 const PORT = 3000;
@@ -25,6 +28,77 @@ connection.connect(err => {
         return;
     }
     console.log('Connected to MySQL');
+});
+
+// 创建 HTTP 服务器并将 Express 应用程序挂载到服务器
+const server = http.createServer(app);
+
+// 创建 WebSocket 服务器
+const wss = new WebSocket.Server({ server });
+
+const clients = new Map();
+
+wss.on('connection', (ws) => {
+    ws.on('message', (message) => {
+        const data = JSON.parse(message);
+
+        if (data.type === "identify") {
+            ws.userId = data.userId;
+            clients.set(ws.userId, ws);
+            console.log(`User connected: ${ws.userId}`);
+        }
+
+        if (data.type === "message") {
+            console.log(`Received message from user ${ws.userId} to user ${data.targetUserId}: ${data.text}`);
+            const targetWs = clients.get(data.targetUserId);
+            
+            // 生成当前时间戳
+            const timestamp = new Date();
+
+            // 存储消息到数据库
+            connection.query(
+                'INSERT INTO messages (sender_id, receiver_id, message, timestamp) VALUES (?, ?, ?, ?)', 
+                [ws.userId, data.targetUserId, data.text, timestamp], 
+                (err, results) => {
+                    if (err) {
+                        console.error('Error inserting message into MySQL:', err);
+                        return;
+                    }
+                    console.log('Message stored in database');
+                }
+            );
+
+            if (targetWs && targetWs.readyState === WebSocket.OPEN) {
+                targetWs.send(JSON.stringify({ type: "message", text: data.text, timestamp: timestamp, senderId: ws.userId }));
+            }
+        }
+    });
+
+    ws.on('close', () => {
+        console.log(`User disconnected: ${ws.userId}`);
+        clients.delete(ws.userId);
+    });
+});
+
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+// 查询对话记录的路由
+app.get('/conversation', (req, res) => {
+    const { sender_id, receiver_id } = req.query;
+
+    connection.query(
+        'SELECT * FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY timestamp',
+        [sender_id, receiver_id, receiver_id, sender_id],
+        (err, results) => {
+            if (err) {
+                console.error('Error querying messages from MySQL:', err);
+                return res.status(500).json({ message: 'Internal server error' });
+            }
+            res.json(results);
+        }
+    );
 });
 
 // 注册路由
@@ -81,7 +155,7 @@ app.post('/login', (req, res) => {
         }
 
         const user = results[0];
-        const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '5s' });
+        const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '5h' });
 
         res.json({ message: 'Login successful', token, userId: user.id });
     });
@@ -267,6 +341,3 @@ function authenticateToken(req, res, next) {
     });
 }
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
