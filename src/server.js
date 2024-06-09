@@ -5,7 +5,6 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const WebSocket = require('ws');
 const http = require('http');
-const { log } = require('console');
 
 const app = express();
 const PORT = 3000;
