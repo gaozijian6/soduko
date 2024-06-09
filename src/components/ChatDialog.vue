@@ -46,12 +46,6 @@ onMounted(() => {
   });
 });
 
-// 回调函数
-const handleReceiverIdChange = (newReceiverId, oldReceiverId) => {
-  console.log(`Receiver ID changed from ${oldReceiverId} to ${newReceiverId}`);
-  // 在这里可以添加其他需要在receiver_id变化时执行的逻辑
-};
-
 // 监听 receiver_id 的变化
 watch(
   () => props.receiver_id,
