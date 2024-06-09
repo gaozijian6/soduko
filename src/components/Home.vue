@@ -17,7 +17,7 @@
 
     <div v-if="newFriendRequest" @click="showFriendRequestDialog">
       <p class="new-request">
-        You have a new friend request from {{ newFriendRequest.username }}
+        You have a new friend request from {{ newFriendRequest.sender_username }}
       </p>
     </div>
 
@@ -265,7 +265,7 @@ const handleFriendRequest = (action) => {
     .then(() => {
       if (action === "accepted") {
         alert("Friend request accepted");
-        // fetchFriends(); // 更新好友列表
+        fetchFriends(); // 更新好友列表
       } else {
         alert("Friend request rejected");
       }
