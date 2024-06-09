@@ -95,9 +95,9 @@ onMounted(() => {
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    if (data.type === "message") {
-      messages.value.push({ id: Date.now(), text: data.text });
-      console.log(data.text);
+      console.log("Received message:", data.text);
+    if (data.type == "message") {
+      messages.value.push({ message: data.text, sender_id: data.senderId, receiver_id: userId});
     }
   };
 });
@@ -106,12 +106,17 @@ onUnmounted(() => {
   ws.close();
 });
 
-const updateMessages = (newMessages) => {
-  messages.value = newMessages;
+
+const updateMessages = (newMessage) => {
+  messages.value.push({
+    message: newMessage,
+    sender_id: userId,
+    receiver_id: selectedFriend.value,
+  });
   ws.send(
     JSON.stringify({
       type: "message",
-      text: newMessages[newMessages.length - 1],
+      text: newMessage,
       targetUserId: selectedFriend.value,
     })
   );
@@ -127,6 +132,7 @@ const selectFriend = (friendId) => {
   currentFriend.value = friends.value.find(
     (friend) => friend.id === selectedFriend.value
   );
+  fetchConversations(userId, selectedFriend.value);
 };
 
 const showFriendRequestDialog = () => {
@@ -159,6 +165,18 @@ const apiClient = axios.create({
     Authorization: `Bearer ${token}`,
   },
 });
+
+const fetchConversations = (sender_id,receiver_id) => {
+  apiClient.get('/conversation', {
+    params: { sender_id, receiver_id }
+  })
+  .then(response => {
+    messages.value = response.data;
+  })
+  .catch(error => {
+    console.error('Error fetching conversations:', error);
+  });
+};
 
 // 查找好友
 const findFriend = () => {

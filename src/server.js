@@ -50,7 +50,7 @@ wss.on('connection', (ws) => {
 
         if (data.type === "message") {
             console.log(`Received message from user ${ws.userId} to user ${data.targetUserId}: ${data.text}`);
-            const targetWs = clients.get(data.targetUserId);
+            const targetWs = clients.get(String(data.targetUserId));
             
             // 生成当前时间戳
             const timestamp = new Date();
@@ -69,8 +69,10 @@ wss.on('connection', (ws) => {
             );
 
             if (targetWs && targetWs.readyState === WebSocket.OPEN) {
+                console.log(`Sending message to user ${data.targetUserId}`);
                 targetWs.send(JSON.stringify({ type: "message", text: data.text, timestamp: timestamp, senderId: ws.userId }));
             }
+
         }
     });
 
@@ -271,10 +273,6 @@ app.post('/handleFriendRequest', (req, res) => {
                 }
 
                 const { sender_id, receiver_id } = results[0];
-
-                // 插入好友关系
-                const newFriendship1 = { user_id: sender_id, friend_id: receiver_id };
-                const newFriendship2 = { user_id: receiver_id, friend_id: sender_id };
 
                 connection.query('INSERT INTO friends (user_id, friend_id) VALUES (?, ?), (?, ?)', [sender_id, receiver_id, receiver_id, sender_id], (err, results) => {
                     if (err) {

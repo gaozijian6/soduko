@@ -4,8 +4,17 @@
       <span>与 {{ currentFriend.username }} 对话中</span>
       <button @click="closeChat">关闭</button>
     </div>
-    <div class="chat-body">
-      <!-- 对话内容 -->
+    <div class="chat-body" ref="chatBody">
+      <div
+        v-for="message in messages"
+        :key="message.id"
+        :class="{
+          'message-sent': message.sender_id == sender_id,
+          'message-received': message.sender_id != sender_id,
+        }"
+      >
+        <span class="message-content">{{ message.message }}</span>
+      </div>
     </div>
     <div class="chat-footer">
       <input v-model="newMessage" placeholder="输入消息..." />
@@ -15,7 +24,7 @@
 </template>
   
   <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, nextTick } from "vue";
 
 const props = defineProps({
   show: Boolean,
@@ -26,6 +35,16 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["update:messages", "close"]);
+
+const newMessage = ref("");
+const chatBody = ref(null);
+
+onMounted(() => {
+  // 初始化时滚动到底部
+  nextTick(() => {
+    scrollToBottom();
+  });
+});
 
 // 回调函数
 const handleReceiverIdChange = (newReceiverId, oldReceiverId) => {
@@ -41,7 +60,22 @@ watch(
   }
 );
 
-const newMessage = ref("");
+watch(
+  () => props.messages,
+  (newMessages) => {
+    // 监听 messages 数组的变化并滚动到底部
+    nextTick(() => {
+      scrollToBottom();
+    });
+  },
+  { deep: true }
+);
+
+const scrollToBottom = () => {
+  if (chatBody.value) {
+    chatBody.value.scrollTop = chatBody.value.scrollHeight;
+  }
+};
 
 const closeChat = () => {
   emit("close");
@@ -49,8 +83,7 @@ const closeChat = () => {
 
 const sendMessage = () => {
   if (newMessage.value.trim() !== "") {
-    const updatedMessages = [...props.messages, newMessage.value];
-    emit("update:messages", updatedMessages);
+    emit("update:messages", newMessage.value);
     newMessage.value = "";
   }
 };
@@ -94,6 +127,37 @@ const sendMessage = () => {
     flex: 1;
     padding: 10px;
     overflow-y: auto;
+
+    .message-sent,
+    .message-received {
+      display: flex;
+      margin-bottom: 10px;
+
+      .message-content {
+        max-width: 70%;
+        padding: 10px;
+        border-radius: 10px;
+        word-wrap: break-word;
+        width: fit-content;
+      }
+    }
+
+    .message-sent {
+      justify-content: flex-end;
+
+      .message-content {
+        background-color: #dcf8c6;
+      }
+    }
+
+    .message-received {
+      justify-content: flex-start;
+
+      .message-content {
+        background-color: #fff;
+        border: 1px solid #ccc;
+      }
+    }
   }
 
   .chat-footer {
