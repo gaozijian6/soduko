@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>JWT Auth Example</h1>
+    <h1>qq chat demo</h1>
     <form @submit.prevent="login">
       <label for="username">Username:</label>
       <input type="text" v-model="username" required />

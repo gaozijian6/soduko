@@ -1,6 +1,5 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
 const cors = require('cors');
 const mysql = require('mysql2');
 const WebSocket = require('ws');
@@ -10,7 +9,7 @@ const app = express();
 const PORT = 3000;
 const SECRET_KEY = 'y1245fvgfrfghr1';
 
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(cors());
 
 // 配置 MySQL 连接
