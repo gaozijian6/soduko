@@ -4,12 +4,14 @@ const cors = require('cors');
 const mysql = require('mysql2');
 const WebSocket = require('ws');
 const http = require('http');
+const sendVerificationCode = require('./mailer');
 
 const app = express();
 const PORT = 3000;
 const SECRET_KEY = 'y1245fvgfrfghr1';
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // 配置 MySQL 连接
@@ -101,6 +103,20 @@ app.get('/conversation', (req, res) => {
     );
 });
 
+app.post('/send-code', (req, res) => {
+    const { email } = req.body;
+    const code = Math.floor(100000 + Math.random() * 900000); // 生成6位随机验证码
+  
+    // 发送验证码
+    sendVerificationCode(email, code);
+  
+    res.status(200).json({ message: 'Verification code sent' });
+  });
+  
+  app.listen(3001, () => {
+    console.log('Server is running on port 3001');
+  });
+
 // 注册路由
 app.get('/register', (req, res) => {
     const { username, password } = req.query;
@@ -143,6 +159,7 @@ app.get('/register', (req, res) => {
 // 登录路由
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
+    console.log(username, password);
 
     connection.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, results) => {
         if (err) {
