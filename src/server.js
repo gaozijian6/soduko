@@ -340,7 +340,7 @@ app.get('/friendRequests', (req, res) => {
 });
 
 
-// 中间件用于验证toke
+// 中间件用于验证token
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -353,4 +353,3 @@ function authenticateToken(req, res, next) {
         next();
     });
 }
-
