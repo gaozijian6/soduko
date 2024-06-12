@@ -51,14 +51,14 @@ wss.on('connection', (ws) => {
         if (data.type === "message") {
             console.log(`Received message from user ${ws.userId} to user ${data.targetUserId}: ${data.text}`);
             const targetWs = clients.get(String(data.targetUserId));
-            
+
             // 生成当前时间戳
             const timestamp = new Date();
 
             // 存储消息到数据库
             connection.query(
-                'INSERT INTO messages (sender_id, receiver_id, message, timestamp) VALUES (?, ?, ?, ?)', 
-                [ws.userId, data.targetUserId, data.text, timestamp], 
+                'INSERT INTO messages (sender_id, receiver_id, message, timestamp) VALUES (?, ?, ?, ?)',
+                [ws.userId, data.targetUserId, data.text, timestamp],
                 (err, results) => {
                     if (err) {
                         console.error('Error inserting message into MySQL:', err);
@@ -103,26 +103,51 @@ app.get('/conversation', (req, res) => {
     );
 });
 
+// 内存存储验证码
+const verificationCodes = {};
+
 app.post('/send-code', (req, res) => {
     const { email } = req.body;
-    const code = Math.floor(100000 + Math.random() * 900000); // 生成6位随机验证码
-  
+    const randomNumber = Math.random().toString().slice(-6); // 生成随机数并截取后六位
+    const code = randomNumber.padStart(6, '0');
+
+    // 存储验证码和生成时间
+    verificationCodes[email] = { code, timestamp: Date.now() };
+
     // 发送验证码
     sendVerificationCode(email, code);
-  
+
     res.status(200).json({ message: 'Verification code sent' });
-  });
-  
-  app.listen(3001, () => {
+});
+
+app.listen(3001, () => {
     console.log('Server is running on port 3001');
-  });
+});
 
 // 注册路由
-app.get('/register', (req, res) => {
-    const { username, password } = req.query;
+app.post('/register', (req, res) => {
+    const { username, password, email, verificationCode } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ message: 'Username and password are required' });
+    if (!username || !password || !email || !verificationCode) {
+        return res.status(400).json({ message: 'Username, password, email, and verification code are required' });
+    }
+
+    // 验证验证码
+    const storedData = verificationCodes[email];
+    if (!storedData) {
+        return res.status(400).json({ message: 'Verification code not found' });
+    }
+
+    const { code, timestamp } = storedData;
+    const currentTime = Date.now();
+    const timeDifference = (currentTime - timestamp) / 1000 / 60; // 转换为分钟
+
+    if (timeDifference > 5) {
+        return res.status(400).json({ message: 'Verification code expired' });
+    }
+
+    if (code !== verificationCode) {
+        return res.status(400).json({ message: 'Invalid verification code' });
     }
 
     connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
@@ -135,7 +160,7 @@ app.get('/register', (req, res) => {
             return res.status(400).json({ message: 'Username already exists' });
         }
 
-        const newUser = { username, password };
+        const newUser = { username, password, email };
         connection.query('INSERT INTO users SET ?', newUser, (err, results) => {
             if (err) {
                 console.error('Error inserting into MySQL:', err);

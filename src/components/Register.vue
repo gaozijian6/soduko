@@ -8,9 +8,9 @@
         <div class="form-group">
           <label for="username" class="hidden-label">Username:</label>
           <input type="text" v-model="username" placeholder="用户名" required />
-          <span class="validation-message" v-if="!usernameValid">{{
-            usernameMessage
-          }}</span>
+          <span class="validation-message" v-if="!usernameValid">
+            {{ usernameMessage }}
+          </span>
         </div>
 
         <div class="form-group">
@@ -21,28 +21,40 @@
             placeholder="密码"
             required
           />
-          <span class="validation-message" v-if="!passwordValid">{{
-            passwordMessage
-          }}</span>
+          <span class="validation-message" v-if="!passwordValid">
+            {{ passwordMessage }}
+          </span>
+        </div>
+
+        <div class="form-group email-group">
+          <label for="email" class="hidden-label">Email:</label>
+          <div class="input-with-button">
+            <input type="email" v-model="email" placeholder="邮箱" required />
+            <button
+              type="button"
+              @click="sendVerificationCode"
+              class="send-code-button"
+              :disabled="isSendingCode"
+            >
+              {{ buttonText }}
+            </button>
+          </div>
+          <span class="validation-message" v-if="!emailValid">
+            {{ emailMessage }}
+          </span>
         </div>
 
         <div class="form-group">
-          <label for="email" class="hidden-label">Email:</label>
-          <input type="email" v-model="email" placeholder="邮箱" required />
-          <span class="validation-message" v-if="!emailValid">{{
-            emailMessage
-          }}</span>
+          <label for="verificationCode" class="hidden-label"
+            >Verification Code:</label
+          >
+          <input
+            type="text"
+            v-model="verificationCode"
+            placeholder="验证码"
+            required
+          />
         </div>
-
-        <label for="verificationCode" class="hidden-label"
-          >Verification Code:</label
-        >
-        <input
-          type="text"
-          v-model="verificationCode"
-          placeholder="验证码"
-          required
-        />
 
         <button type="submit" class="register-button">注册</button>
       </form>
@@ -56,11 +68,13 @@ import axios from "axios";
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 
+const router = useRouter();
 const username = ref("");
 const password = ref("");
 const email = ref("");
 const verificationCode = ref("");
-const router = useRouter();
+const buttonText = ref("发送验证码");
+const isSendingCode = ref(false);
 
 const usernameValid = computed(() => username.value.trim() !== "");
 const passwordHasUpperCase = computed(() => /[A-Z]/.test(password.value));
@@ -106,12 +120,11 @@ const register = () => {
   }
 
   axios
-    .get("http://localhost:3000/register", {
-      params: {
-        username: username.value,
-        password: password.value,
-        email: email.value,
-      },
+    .post("http://localhost:3000/register", {
+      username: username.value,
+      password: password.value,
+      email: email.value,
+      verificationCode: verificationCode.value,
     })
     .then((response) => {
       alert("注册成功");
@@ -121,6 +134,40 @@ const register = () => {
       console.error("Error:", error);
       alert("注册失败: " + (error.response?.data?.message || "发生错误"));
     });
+};
+
+const sendVerificationCode = () => {
+  if (isSendingCode.value) return;
+  axios
+    .post("http://localhost:3000/send-code", {
+      email: email.value,
+    })
+    .then((response) => {
+      // 根据需要处理响应，例如显示提示信息
+      console.log("Verification code sent:", response.data);
+      startCountdown();
+    })
+    .catch((error) => {
+      console.error("Error sending verification code:", error);
+      // 处理错误，例如显示错误提示
+    });
+};
+
+const startCountdown = () => {
+  let countdown = 60;
+  isSendingCode.value = true;
+  buttonText.value = `${countdown}秒后重试`;
+
+  const interval = setInterval(() => {
+    countdown--;
+    if (countdown > 0) {
+      buttonText.value = `${countdown}秒后重试`;
+    } else {
+      buttonText.value = "发送验证码";
+      isSendingCode.value = false;
+      clearInterval(interval);
+    }
+  }, 1000);
 };
 
 const navigateToHome = () => {
@@ -168,19 +215,36 @@ const navigateToHome = () => {
     .form-group {
       position: relative;
       margin-bottom: 20px;
+    }
 
-      .validation-message {
-        color: red;
-        font-size: 12px;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        text-align: left;
-        padding: 0 10px;
-        box-sizing: border-box;
-      }
+    .email-group {
+      display: flex;
+      align-items: center;
+    }
 
+    .input-with-button {
+      display: flex;
+      align-items: center;
+    }
+
+    .input-with-button input {
+      flex: 1;
+    }
+
+    .send-code-button {
+      margin-left: 10px;
+    }
+
+    .validation-message {
+      color: red;
+      font-size: 12px;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      text-align: left;
+      padding: 0 10px;
+      box-sizing: border-box;
     }
 
     .register-button,

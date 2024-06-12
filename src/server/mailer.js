@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
+const path = require('path');
 require('dotenv').config();
-console.log(process);
 const transporter = nodemailer.createTransport({
   host: 'smtp.qq.com',
   port: 465,
