@@ -103,6 +103,44 @@ app.get('/conversation', (req, res) => {
     );
 });
 
+// 找回密码
+app.post('/reset-password', (req, res) => {
+    const { email, verificationCode, newPassword } = req.body;
+
+    if (!email || !verificationCode || !newPassword) {
+        return res.status(400).json({ message: 'Email, verification code, and new password are required' });
+    }
+
+    // 验证验证码
+    const storedData = verificationCodes[email];
+    if (!storedData) {
+        return res.status(400).json({ message: 'Verification code not found' });
+    }
+
+    const { code, timestamp } = storedData;
+    const currentTime = Date.now();
+    const timeDifference = (currentTime - timestamp) / 1000 / 60; // 转换为分钟
+
+    if (timeDifference > 5) {
+        return res.status(400).json({ message: 'Verification code expired' });
+    }
+
+    if (code !== verificationCode) {
+        return res.status(400).json({ message: 'Invalid verification code' });
+    }
+
+    // 更新密码
+    connection.query('UPDATE users SET password = ? WHERE email = ?', [newPassword, email], (err, results) => {
+        if (err) {
+            console.error('Error updating password:', err);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        res.json({ message: 'Password reset successfully' });
+    });
+});
+
+
 // 内存存储验证码
 const verificationCodes = {};
 
@@ -124,84 +162,107 @@ app.listen(3001, () => {
     console.log('Server is running on port 3001');
 });
 
+// 生成唯一的用户数字ID
+const generateUniqueUserId = (callback) => {
+    const generateRandomId = () => {
+      let userId = Math.random().toString().slice(2, 8);
+      while (userId.startsWith('0')) {
+        userId = Math.random().toString().slice(2, 8);
+      }
+      return userId;
+    };
+  
+    const userId = generateRandomId();
+    connection.query('SELECT user_id FROM users WHERE user_id = ?', [userId], (err, results) => {
+      if (err) {
+        return callback(err, null);
+      }
+      if (results.length > 0) {
+        // 如果ID已经存在，递归调用以生成一个新的ID
+        return generateUniqueUserId(callback);
+      }
+      // 返回唯一ID
+      callback(null, userId);
+    });
+  };
+
 // 注册路由
 app.post('/register', (req, res) => {
     const { username, password, email, verificationCode } = req.body;
-
+  
     if (!username || !password || !email || !verificationCode) {
-        return res.status(400).json({ message: 'Username, password, email, and verification code are required' });
+      return res.status(400).json({ message: 'Username, password, email, and verification code are required' });
     }
-
+  
     // 验证验证码
     const storedData = verificationCodes[email];
     if (!storedData) {
-        return res.status(400).json({ message: 'Verification code not found' });
+      return res.status(400).json({ message: 'Verification code not found' });
     }
-
+  
     const { code, timestamp } = storedData;
     const currentTime = Date.now();
     const timeDifference = (currentTime - timestamp) / 1000 / 60; // 转换为分钟
-
+  
     if (timeDifference > 5) {
-        return res.status(400).json({ message: 'Verification code expired' });
+      return res.status(400).json({ message: 'Verification code expired' });
     }
-
+  
     if (code !== verificationCode) {
-        return res.status(400).json({ message: 'Invalid verification code' });
+      return res.status(400).json({ message: 'Invalid verification code' });
     }
-
+  
     connection.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
+      if (err) {
+        console.error('Error querying MySQL:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+  
+      if (results.length > 0) {
+        return res.status(400).json({ message: 'Username already exists' });
+      }
+  
+      generateUniqueUserId((err, userId) => {
         if (err) {
-            console.error('Error querying MySQL:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+          console.error('Error generating user ID:', err);
+          return res.status(500).json({ message: 'Internal server error' });
         }
-
-        if (results.length > 0) {
-            return res.status(400).json({ message: 'Username already exists' });
-        }
-
-        const newUser = { username, password, email };
+  
+        const newUser = { user_id: userId, username, password, email };
         connection.query('INSERT INTO users SET ?', newUser, (err, results) => {
-            if (err) {
-                console.error('Error inserting into MySQL:', err);
-                return res.status(500).json({ message: 'Internal server error' });
-            }
-
-            // 获取新用户的ID
-            connection.query('SELECT id FROM users WHERE username = ?', [username], (err, results) => {
-                if (err) {
-                    console.error('Error querying MySQL:', err);
-                    return res.status(500).json({ message: 'Internal server error' });
-                }
-
-                res.json({ message: 'User registered successfully', userId: results[0].id });
-            });
+          if (err) {
+            console.error('Error inserting into MySQL:', err);
+            return res.status(500).json({ message: 'Internal server error' });
+          }
+  
+          res.json({ message: 'User registered successfully', userId });
         });
+      });
     });
-});
+  });
 
 
 // 登录路由
 app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    console.log(username, password);
-
-    connection.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, results) => {
-        if (err) {
-            console.error('Error querying MySQL:', err);
-            return res.status(500).json({ message: 'Internal server error' });
-        }
-
-        if (results.length === 0) {
-            return res.status(400).json({ message: 'Invalid username or password' });
-        }
-
-        const user = results[0];
-        const token = jwt.sign({ username: user.username }, SECRET_KEY, { expiresIn: '5h' });
-
-        res.json({ message: 'Login successful', token, userId: user.id });
+    const { userId, password } = req.body;
+    console.log(userId, password);
+  
+    connection.query('SELECT * FROM users WHERE user_id = ? AND password = ?', [userId, password], (err, results) => {
+      if (err) {
+        console.error('Error querying MySQL:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+      }
+  
+      if (results.length === 0) {
+        return res.status(400).json({ message: 'Invalid user ID or password' });
+      }
+  
+      const user = results[0];
+      const token = jwt.sign({ userId: user.user_id }, SECRET_KEY, { expiresIn: '5h' });
+  
+      res.json({ message: 'Login successful', token, userId: user.user_id, username: user.username });
     });
-});
+  });
 
 
 
@@ -234,14 +295,14 @@ app.use(authenticateToken);
 
 // 查找好友路由
 app.get('/findFriend', (req, res) => {
-    const { name } = req.query;
+    const { friendId } = req.query;
 
-    if (!name) {
-        return res.status(400).json({ message: 'Name is required' });
+    if (!friendId) {
+        return res.status(400).json({ message: 'friendId is required' });
     }
 
     // 查找好友
-    connection.query('SELECT * FROM users WHERE username = ?', [name], (err, results) => {
+    connection.query('SELECT * FROM users WHERE user_id = ?', [friendId], (err, results) => {
         if (err) {
             console.error('Error querying MySQL:', err);
             return res.status(500).json({ message: 'Internal server error' });
@@ -249,7 +310,7 @@ app.get('/findFriend', (req, res) => {
 
         if (results.length > 0) {
             const friend = results[0];
-            res.json({ name: friend.username, id: friend.id });
+            res.json({ name: friend.username, id: friend.user_id });
         } else {
             res.json({ friend: null });
         }

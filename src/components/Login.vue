@@ -8,8 +8,8 @@
         <div class="user-image-wrapper">
           <img class="user-image" src="../assets/pika.png" />
         </div>
-        <label for="username" class="hidden-label">Username:</label>
-        <input type="text" v-model="username" placeholder="QQ号码" required />
+        <label for="userId" class="hidden-label">userId:</label>
+        <input type="text" v-model="userId" placeholder="QQ号码" required />
         <label for="password" class="hidden-label">Password:</label>
         <input type="password" v-model="password" placeholder="密码" required />
         <div class="options">
@@ -21,7 +21,7 @@
             v-model="rememberPassword"
           />
           <label for="remember-password">记住密码</label>
-          <a href="#" class="forgot-password">找回密码</a>
+          <a href="#" class="forgot-password" @click="resetPassword">找回密码</a>
         </div>
         <button type="submit" class="login-button">登录</button>
         <button
@@ -42,24 +42,25 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 
 const username = ref("");
+const userId = ref("");
 const password = ref("");
 const router = useRouter();
 
 const login = () => {
   axios
     .post("http://localhost:3000/login", {
-      username: username.value,
+      userId: userId.value,
       password: password.value,
     })
     .then((response) => {
       const data = response.data;
       if (data.token) {
-        const userId = data.userId;
-        localStorage.setItem(`${userId}-token`, data.token);
+        username.value = data.username;
+        localStorage.setItem(`${userId.value}-token`, data.token);
         alert("Login successful");
         router.push({
           name: "home",
-          query: { userId, username: username.value },
+          query: { userId: userId.value, username: username.value },
         });
       } else {
         alert("Login failed: " + (data.message || "Invalid credentials"));
@@ -76,6 +77,10 @@ const login = () => {
 
 const navigateToRegister = () => {
   router.push({ name: "register" });
+};
+
+const resetPassword = () => {
+  router.push({ name: "reset-password" });
 };
 </script>
 

@@ -4,8 +4,8 @@
     <p>You have successfully logged in!</p>
 
     <div>
-      <label for="friendName">Enter Friend's Name:</label>
-      <input type="text" v-model="friendName" required />
+      <label for="friendId">Enter Friend's ID:</label>
+      <input type="text" v-model="friendId" required />
       <button @click="findFriend">Find Friend</button>
     </div>
     <div v-if="friendResult">
@@ -74,7 +74,7 @@ const userId = route.query.userId;
 const username = ref(route.query.username);
 const token = localStorage.getItem(`${userId}-token`);
 const newFriendRequest = ref(null);
-const friendName = ref("");
+const friendId = ref("");
 const friendResult = ref(null);
 const friends = ref([]);
 const selectedFriend = ref(null);
@@ -180,14 +180,14 @@ const fetchConversations = (sender_id,receiver_id) => {
 
 // 查找好友
 const findFriend = () => {
-  if (!friendName.value) {
+  if (!friendId.value) {
     alert("Please enter a friend's name");
     return;
   }
 
   apiClient
     .get("/findFriend", {
-      params: { name: friendName.value },
+      params: { friendId: friendId.value },
     })
     .then((response) => {
       console.log(response.data);
@@ -310,7 +310,7 @@ const accessProtectedRoute = () => {
     })
     .catch((error) => {
       console.error("Error accessing protected route:", error);
-      alert("Access failed");
+      alert(error.response.data.message);
       router.push({ name: "login" });
     });
 };

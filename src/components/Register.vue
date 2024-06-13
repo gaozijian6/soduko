@@ -127,7 +127,7 @@ const register = () => {
       verificationCode: verificationCode.value,
     })
     .then((response) => {
-      alert("注册成功");
+      alert(`注册成功,请记住您的id:${response.data.userId}并返回登录`);
       router.push({ name: "login" });
     })
     .catch((error) => {
