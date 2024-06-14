@@ -17,14 +17,28 @@
       </div>
     </div>
     <div class="chat-footer">
-      <input v-model="newMessage" placeholder="输入消息..." />
-      <button @click="sendMessage">发送</button>
+      <div class="footer-top">
+        <button ref="emojiButton" class="emoji-button" @click="toggleEmojiPicker">😊</button>
+        <EmojiPicker v-if="showEmojiPicker" @select="addEmoji" @close="closeEmojiPicker" :emojiButton="emojiButton"/>
+      </div>
+      <div class="footer-middle">
+        <textarea v-model="newMessage" placeholder="输入消息..." />
+
+      </div>
+      <div class="footer-down">
+        <button @click="sendMessage" class="send-button">发送</button>
+        <button @click="closeChat" class="close-button">关闭</button>
+      </div>
     </div>
   </div>
 </template>
+
+
+
   
   <script setup>
 import { ref, watch, onMounted, nextTick } from "vue";
+import EmojiPicker from './EmojiPicker.vue';
 
 const props = defineProps({
   show: Boolean,
@@ -38,6 +52,8 @@ const emit = defineEmits(["update:messages", "close"]);
 
 const newMessage = ref("");
 const chatBody = ref(null);
+const showEmojiPicker = ref(false);
+const emojiButton = ref(null);
 
 onMounted(() => {
   // 初始化时滚动到底部
@@ -45,14 +61,6 @@ onMounted(() => {
     scrollToBottom();
   });
 });
-
-// 监听 receiver_id 的变化
-watch(
-  () => props.receiver_id,
-  (newReceiverId, oldReceiverId) => {
-    handleReceiverIdChange(newReceiverId, oldReceiverId);
-  }
-);
 
 watch(
   () => props.messages,
@@ -64,6 +72,19 @@ watch(
   },
   { deep: true }
 );
+
+const toggleEmojiPicker = () => {
+  showEmojiPicker.value = !showEmojiPicker.value;
+};
+
+const addEmoji = (emoji) => {
+  newMessage.value += emoji;
+  showEmojiPicker.value = false;
+};
+
+const closeEmojiPicker = () => {
+  showEmojiPicker.value = false;
+};
 
 const scrollToBottom = () => {
   if (chatBody.value) {
@@ -81,6 +102,10 @@ const sendMessage = () => {
     newMessage.value = "";
   }
 };
+
+onMounted(() => {
+  console.log('emojiButton onMounted:', emojiButton.value);
+});
 </script>
   
   <style scoped lang="less">
@@ -88,39 +113,43 @@ const sendMessage = () => {
   position: fixed;
   right: 20px;
   bottom: 20px;
-  width: 300px;
-  height: 400px;
-  border: 1px solid #ccc;
+  width: 500px;
+  height: 600px;
+  border: 1px solid #ddd;
   background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-
-  .chat-header,
-  .chat-footer {
-    padding: 10px;
-    background: #f5f5f5;
-    border-bottom: 1px solid #ddd;
-  }
+  border-radius: 10px;
+  overflow: hidden;
 
   .chat-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: none;
+    padding: 15px;
+    background: linear-gradient(to right, #8e2de2, #4a00e0);
+    color: white;
+    font-size: 18px;
 
     button {
       background: none;
       border: none;
       cursor: pointer;
       font-size: 16px;
+      color: white;
+
+      &:hover {
+        color: #ddd;
+      }
     }
   }
 
   .chat-body {
     flex: 1;
-    padding: 10px;
+    padding: 15px;
     overflow-y: auto;
+    background: #f5f5f5;
 
     .message-sent,
     .message-received {
@@ -132,6 +161,7 @@ const sendMessage = () => {
         padding: 10px;
         border-radius: 10px;
         word-wrap: break-word;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         width: fit-content;
       }
     }
@@ -141,6 +171,7 @@ const sendMessage = () => {
 
       .message-content {
         background-color: #dcf8c6;
+        color: #333;
       }
     }
 
@@ -148,38 +179,87 @@ const sendMessage = () => {
       justify-content: flex-start;
 
       .message-content {
-        background-color: #fff;
-        border: 1px solid #ccc;
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+        color: #333;
       }
     }
   }
 
   .chat-footer {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    background: #fff;
     border-top: 1px solid #ddd;
 
-    input {
-      flex: 1;
-      padding: 5px;
-      margin-right: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    .footer-top {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #ddd;
+
+      .emoji-button {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #555;
+
+        &:hover {
+          color: #333;
+        }
+      }
     }
 
-    button {
-      padding: 5px 10px;
-      border: none;
-      background-color: #007bff;
-      color: white;
-      border-radius: 4px;
-      cursor: pointer;
+    .footer-middle {
+      display: flex;
+      align-items: center;
 
-      &:hover {
-        background-color: #0056b3;
+      textarea {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 20px;
+        outline: none;
+        font-size: 14px;
+        height: 60px;
+    }
+    }
+
+    .footer-down {
+      display: flex;
+      justify-content: flex-end;
+
+      .send-button,
+      .close-button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-left: 5px;
+        transition: background-color 0.3s;
+      }
+
+      .send-button {
+        background-color: #007bff;
+        color: white;
+
+        &:hover {
+          background-color: #0056b3;
+        }
+      }
+
+      .close-button {
+        background-color: #e74c3c;
+        color: white;
+
+        &:hover {
+          background-color: #c0392b;
+        }
       }
     }
   }
 }
+
 </style>
   

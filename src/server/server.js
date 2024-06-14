@@ -310,7 +310,7 @@ app.get('/findFriend', (req, res) => {
 
         if (results.length > 0) {
             const friend = results[0];
-            res.json({ name: friend.username, id: friend.user_id });
+            res.json(friend);
         } else {
             res.json({ friend: null });
         }
@@ -326,29 +326,42 @@ app.post('/sendFriendRequest', (req, res) => {
         return res.status(400).json({ message: 'You cannot send a friend request to yourself' });
     }
 
-    // 检查是否已经发送过请求
-    connection.query('SELECT * FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = "pending"', [senderId, receiverId], (err, results) => {
+    // 检查是否已经是好友
+    connection.query('SELECT * FROM friends WHERE (user_id = ? AND friend_id = ?) OR (friend_id = ? AND user_id = ?)', [senderId, receiverId, receiverId, senderId], (err, results) => {
         if (err) {
             console.error('Error querying MySQL:', err);
-            return res.status(500).json({ message: 'Internal server error' });
+            return res.status(500).json({ message: 'Internal server error1' });
         }
 
         if (results.length > 0) {
-            return res.status(400).json({ message: 'Friend request already sent' });
+            return res.status(400).json({ message: 'You are already friends' });
         }
 
-        // 插入好友请求
-        const newRequest = { sender_id: senderId, sender_username: senderUsername, receiver_id: receiverId, receiver_username: receiverUsername };
-        connection.query('INSERT INTO friend_requests SET ?', newRequest, (err, results) => {
+        // 检查是否已经发送过请求
+        connection.query('SELECT * FROM friend_requests WHERE sender_id = ? AND receiver_id = ? AND status = "pending"', [senderId, receiverId], (err, results) => {
             if (err) {
-                console.error('Error inserting into MySQL:', err);
-                return res.status(500).json({ message: 'Internal server error' });
+                console.error('Error querying MySQL:', err);
+                return res.status(500).json({ message: 'Internal server error2' });
             }
 
-            res.json({ message: 'Friend request sent successfully' });
+            if (results.length > 0) {
+                return res.status(400).json({ message: 'Friend request already sent' });
+            }
+
+            // 插入好友请求
+            const newRequest = { sender_id: senderId, sender_username: senderUsername, receiver_id: receiverId, receiver_username: receiverUsername };
+            connection.query('INSERT INTO friend_requests SET ?', newRequest, (err, results) => {
+                if (err) {
+                    console.error('Error inserting into MySQL:', err);
+                    return res.status(500).json({ message: 'Internal server error3' });
+                }
+
+                res.json({ message: 'Friend request sent successfully' });
+            });
         });
     });
 });
+
 
 // 处理好友请求路由
 app.post('/handleFriendRequest', (req, res) => {
