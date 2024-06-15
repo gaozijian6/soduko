@@ -6,6 +6,14 @@
     <div class="register-form">
       <form @submit.prevent="register">
         <div class="form-group">
+          <div class="user-image-wrapper">
+            <img v-if="avatarUrl" :src="avatarUrl" class="user-image" />
+          </div>
+          <input id="fileInput" type="file" @change="onFileChange" class="file-input"/>
+          <button type="button" class="upload-button" @click="triggerFileInput">上传头像</button>
+        </div>
+
+        <div class="form-group">
           <label for="username" class="hidden-label">Username:</label>
           <input type="text" v-model="username" placeholder="用户名" required />
           <span class="validation-message" v-if="!usernameValid">
@@ -75,6 +83,8 @@ const email = ref("");
 const verificationCode = ref("");
 const buttonText = ref("发送验证码");
 const isSendingCode = ref(false);
+const avatarUrl = ref("http://127.0.0.1:9000/image/qq.png");
+const avatarFile = ref(null);
 
 const usernameValid = computed(() => username.value.trim() !== "");
 const passwordHasUpperCase = computed(() => /[A-Z]/.test(password.value));
@@ -113,18 +123,36 @@ const emailMessage = computed(() => {
   return emailValid.value ? "✔" : "请输入有效的邮箱地址";
 });
 
+const triggerFileInput = () => {
+  document.getElementById('fileInput').click();
+};
+
+const onFileChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    avatarFile.value = file; // 存储文件
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      avatarUrl.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+
 const register = () => {
   if (!usernameValid.value || !passwordValid.value || !emailValid.value) {
     alert("请确保所有字段都正确填写");
     return;
   }
 
-  axios
-    .post("http://localhost:3000/register", {
+  const handleRegistration = (avatarUrlToSend) => {
+    axios.post("http://localhost:3000/register", {
       username: username.value,
       password: password.value,
       email: email.value,
       verificationCode: verificationCode.value,
+      avatarUrl: avatarUrlToSend,
     })
     .then((response) => {
       alert(`注册成功,请记住您的id:${response.data.userId}并返回登录`);
@@ -134,7 +162,38 @@ const register = () => {
       console.error("Error:", error);
       alert("注册失败: " + (error.response?.data?.message || "发生错误"));
     });
+  };
+
+  if (avatarFile.value) {
+    const file = avatarFile.value;
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+      const arrayBuffer = event.target.result;
+      const blobData = new Blob([new Uint8Array(arrayBuffer)], { type: file.type });
+
+      axios.put('http://127.0.0.1:9000/image/' + file.name, blobData, {
+        headers: {
+          'Content-Type': file.type, // 使用文件的 MIME 类型
+        },
+      })
+      .then(response => {
+        const avatarUrlToSend = 'http://127.0.0.1:9000/image/' + file.name;
+        handleRegistration(avatarUrlToSend);
+      })
+      .catch(error => {
+        console.error('Error uploading file:', error);
+        alert('头像上传失败，请重试');
+      });
+    };
+
+    reader.readAsArrayBuffer(file);
+  } else {
+    handleRegistration(avatarUrl.value);
+  }
 };
+
+
 
 const sendVerificationCode = () => {
   if (isSendingCode.value) return;
@@ -212,6 +271,21 @@ const navigateToHome = () => {
     padding: 20px;
     text-align: center;
 
+    .user-image-wrapper {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      overflow: hidden;
+      border: 2px solid #ccc;
+
+      .user-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
     .form-group {
       position: relative;
       margin-bottom: 20px;
@@ -248,7 +322,8 @@ const navigateToHome = () => {
     }
 
     .register-button,
-    .back-button {
+    .back-button,
+    .upload-button {
       width: calc(100% - 20px);
       padding: 10px;
       margin-top: 10px;
@@ -265,6 +340,14 @@ const navigateToHome = () => {
     .back-button {
       background-color: #007bff;
     }
+
+    .upload-button {
+      background-color: #ff9800;
+    }
+
+    .file-input {
+      display: none;
+    }
   }
 }
 
@@ -279,4 +362,5 @@ const navigateToHome = () => {
     background-position: 0% 0%;
   }
 }
+
 </style>

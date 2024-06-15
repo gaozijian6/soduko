@@ -86,6 +86,26 @@ server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
+// 获取用户头像
+app.get('/avatar/:userId', (req, res) => {
+    const { userId } = req.params;
+    connection.query('SELECT avatar_url FROM users WHERE user_id = ?', [userId], (err, results) => {
+      if (err) {
+        console.error('Error querying MySQL:', err);
+        res.status(500).json({ message: 'Internal server error' });
+        return;
+      }
+      if (results.length > 0 && results[0].avatar_url) {
+        console.log(123);
+        res.json({ avatarUrl: results[0].avatar_url });
+      } else {
+        console.log(456);
+        res.json({ avatarUrl: 'http://127.0.0.1:9000/image/qq.png' });
+      }
+    });
+  });
+  
+
 // 查询对话记录的路由
 app.get('/conversation', (req, res) => {
     const { sender_id, receiver_id } = req.query;
@@ -188,7 +208,7 @@ const generateUniqueUserId = (callback) => {
 
 // 注册路由
 app.post('/register', (req, res) => {
-    const { username, password, email, verificationCode } = req.body;
+    const { username, password, email, verificationCode, avatarUrl } = req.body;
   
     if (!username || !password || !email || !verificationCode) {
       return res.status(400).json({ message: 'Username, password, email, and verification code are required' });
@@ -228,7 +248,7 @@ app.post('/register', (req, res) => {
           return res.status(500).json({ message: 'Internal server error' });
         }
   
-        const newUser = { user_id: userId, username, password, email };
+        const newUser = { user_id: userId, username, password, email, avatar_url: avatarUrl};
         connection.query('INSERT INTO users SET ?', newUser, (err, results) => {
           if (err) {
             console.error('Error inserting into MySQL:', err);

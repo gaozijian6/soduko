@@ -6,7 +6,7 @@
     <div class="login-form">
       <form @submit.prevent="login">
         <div class="user-image-wrapper">
-          <img class="user-image" src="../assets/pika.png" />
+          <img class="user-image" :src="avatarUrl" />
         </div>
         <label for="userId" class="hidden-label">userId:</label>
         <input type="text" v-model="userId" placeholder="QQ号码" required />
@@ -38,12 +38,13 @@
   
   <script setup>
 import axios from "axios";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 
 const username = ref("");
 const userId = ref("");
 const password = ref("");
+const avatarUrl = ref("http://127.0.0.1:9000/image/qq.png");
 const router = useRouter();
 
 const login = () => {
@@ -82,6 +83,28 @@ const navigateToRegister = () => {
 const resetPassword = () => {
   router.push({ name: "reset-password" });
 };
+
+watch(userId, (newUserId) => {
+  if (newUserId.length === 6) {
+    axios
+      .get(`http://localhost:3000/avatar/${newUserId}`)
+      .then((response) => {
+        if (response.data && response.data.avatarUrl) {
+          avatarUrl.value = response.data.avatarUrl;
+          console.log("Avatar URL:", avatarUrl.value);
+        } else {
+          avatarUrl.value = "http://127.0.0.1:9000/image/qq.png";
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching avatar:", error);
+        avatarUrl.value = "http://127.0.0.1:9000/image/qq.png";
+      });
+  } else {
+    avatarUrl.value = "http://127.0.0.1:9000/image/qq.png"
+  }
+});
+
 </script>
 
 <style lang="less" scoped>
