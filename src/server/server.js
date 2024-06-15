@@ -89,24 +89,22 @@ server.listen(PORT, () => {
 // 获取用户头像
 app.get('/avatar/:userId', (req, res) => {
     const { userId } = req.params;
-    connection.query('SELECT avatar_url FROM users WHERE user_id = ?', [userId], (err, results) => {
+    connection.query('SELECT * FROM users WHERE user_id = ?', [userId], (err, results) => {
       if (err) {
         console.error('Error querying MySQL:', err);
         res.status(500).json({ message: 'Internal server error' });
         return;
       }
       if (results.length > 0 && results[0].avatar_url) {
-        console.log(123);
-        res.json({ avatarUrl: results[0].avatar_url });
+        res.json({ avatarUrl: results[0].avatar_url, rememberPassword: results[0].remember_password, password: results[0].password, userIp: results[0].lastIp});
       } else {
-        console.log(456);
         res.json({ avatarUrl: 'http://127.0.0.1:9000/image/qq.png' });
       }
     });
   });
   
 
-// 查询对话记录的路由
+// 查询对话记录的路由  
 app.get('/conversation', (req, res) => {
     const { sender_id, receiver_id } = req.query;
 
@@ -125,10 +123,10 @@ app.get('/conversation', (req, res) => {
 
 // 找回密码
 app.post('/reset-password', (req, res) => {
-    const { email, verificationCode, newPassword } = req.body;
+    const { email, verificationCode, userId, newPassword } = req.body;
 
-    if (!email || !verificationCode || !newPassword) {
-        return res.status(400).json({ message: 'Email, verification code, and new password are required' });
+    if (!email || !verificationCode || !userId || !newPassword) {
+        return res.status(400).json({ message: 'Email, verification code, user ID, and new password are required' });
     }
 
     // 验证验证码
@@ -149,14 +147,26 @@ app.post('/reset-password', (req, res) => {
         return res.status(400).json({ message: 'Invalid verification code' });
     }
 
-    // 更新密码
-    connection.query('UPDATE users SET password = ? WHERE email = ?', [newPassword, email], (err, results) => {
+    // 验证用户ID和邮箱是否匹配
+    connection.query('SELECT * FROM users WHERE email = ? AND user_id = ?', [email, userId], (err, results) => {
         if (err) {
-            console.error('Error updating password:', err);
+            console.error('Error querying users:', err);
             return res.status(500).json({ message: 'Internal server error' });
         }
 
-        res.json({ message: 'Password reset successfully' });
+        if (results.length === 0) {
+            return res.status(400).json({ message: 'User ID and email do not match' });
+        }
+
+        // 更新密码
+        connection.query('UPDATE users SET password = ? WHERE user_id = ?', [newPassword, userId], (err, results) => {
+            if (err) {
+                console.error('Error updating password:', err);
+                return res.status(500).json({ message: 'Internal server error' });
+            }
+
+            res.json({ message: 'Password reset successfully' });
+        });
     });
 });
 
@@ -261,30 +271,41 @@ app.post('/register', (req, res) => {
     });
   });
 
-
 // 登录路由
 app.post('/login', (req, res) => {
-    const { userId, password } = req.body;
-    console.log(userId, password);
-  
+    const { userId, password, rememberPassword, userIp } = req.body;
+    console.log(userId, password, rememberPassword, userIp);
+
     connection.query('SELECT * FROM users WHERE user_id = ? AND password = ?', [userId, password], (err, results) => {
-      if (err) {
-        console.error('Error querying MySQL:', err);
-        return res.status(500).json({ message: 'Internal server error' });
-      }
-  
-      if (results.length === 0) {
-        return res.status(400).json({ message: 'Invalid user ID or password' });
-      }
-  
-      const user = results[0];
-      const token = jwt.sign({ userId: user.user_id }, SECRET_KEY, { expiresIn: '5h' });
-  
-      res.json({ message: 'Login successful', token, userId: user.user_id, username: user.username });
+        if (err) {
+            console.error('Error querying MySQL:', err);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        if (results.length === 0) {
+            return res.status(400).json({ message: 'Invalid user ID or password' });
+        }
+
+        const user = results[0];
+        const token = jwt.sign({ userId: user.user_id }, SECRET_KEY, { expiresIn: '5h' });
+
+        // 更新remember_password字段和lastIp字段
+        connection.query('UPDATE users SET remember_password = ?, lastIp = ? WHERE user_id = ?', [rememberPassword ? 1 : 0, userIp, user.user_id], (updateErr, updateResults) => {
+            if (updateErr) {
+                console.error('Error updating remember_password:', updateErr);
+                return res.status(500).json({ message: 'Internal server error' });
+            }
+
+            res.json({
+                message: 'Login successful',
+                token,
+                userId: user.user_id,
+                username: user.username,
+                rememberPassword: rememberPassword ? 1 : 0
+            });
+        });
     });
-  });
-
-
+});
 
 // 受保护的路由
 app.get('/protected', (req, res) => {

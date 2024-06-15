@@ -139,7 +139,6 @@ const onFileChange = (event) => {
   }
 };
 
-
 const register = () => {
   if (!usernameValid.value || !passwordValid.value || !emailValid.value) {
     alert("请确保所有字段都正确填写");
@@ -192,8 +191,6 @@ const register = () => {
     handleRegistration(avatarUrl.value);
   }
 };
-
-
 
 const sendVerificationCode = () => {
   if (isSendingCode.value) return;

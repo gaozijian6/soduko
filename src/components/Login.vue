@@ -15,43 +15,51 @@
         <div class="options">
           <input type="checkbox" id="auto-login" v-model="autoLogin" />
           <label for="auto-login">自动登录</label>
-          <input
-            type="checkbox"
-            id="remember-password"
-            v-model="rememberPassword"
-          />
+          <input type="checkbox" id="remember-password" v-model="rememberPassword" />
           <label for="remember-password">记住密码</label>
           <a href="#" class="forgot-password" @click="resetPassword">找回密码</a>
         </div>
         <button type="submit" class="login-button">登录</button>
-        <button
-          type="button"
-          @click="navigateToRegister"
-          class="register-button"
-        >
+        <button type="button" @click="navigateToRegister" class="register-button">
           注册账号
         </button>
       </form>
     </div>
   </div>
 </template>
-  
-  <script setup>
+
+<script setup>
 import axios from "axios";
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 const username = ref("");
 const userId = ref("");
 const password = ref("");
 const avatarUrl = ref("http://127.0.0.1:9000/image/qq.png");
+const rememberPassword = ref(false);
+const userIp = ref("");
 const router = useRouter();
+
+// 获取用户IP地址
+onMounted(() => {
+  axios.get('https://icanhazip.com')
+    .then((response) => {
+      userIp.value = response.data;
+      console.log('User IP:', userIp.value);
+    })
+    .catch((error) => {
+      console.error('Error fetching IP:', error);
+    });
+});
 
 const login = () => {
   axios
     .post("http://localhost:3000/login", {
       userId: userId.value,
       password: password.value,
+      rememberPassword: rememberPassword.value,
+      userIp: userIp.value,
     })
     .then((response) => {
       const data = response.data;
@@ -61,7 +69,7 @@ const login = () => {
         alert("Login successful");
         router.push({
           name: "home",
-          query: { userId: userId.value, username: username.value },
+          query: { userId: userId.value, username: username.value, avatarUrl: avatarUrl.value },
         });
       } else {
         alert("Login failed: " + (data.message || "Invalid credentials"));
@@ -71,7 +79,7 @@ const login = () => {
       console.error("Error:", error);
       alert(
         "Login failed: " +
-          (error.response.data.message || "Invalid credentials")
+        (error.response.data.message || "Invalid credentials")
       );
     });
 };
@@ -91,9 +99,14 @@ watch(userId, (newUserId) => {
       .then((response) => {
         if (response.data && response.data.avatarUrl) {
           avatarUrl.value = response.data.avatarUrl;
-          console.log("Avatar URL:", avatarUrl.value);
+          if (response.data.rememberPassword && userIp.value == response.data.userIp) {
+            password.value = response.data.password;
+            rememberPassword.value = !!response.data.rememberPassword;
+          }
         } else {
           avatarUrl.value = "http://127.0.0.1:9000/image/qq.png";
+          rememberPassword.value = false;
+          password.value = "";
         }
       })
       .catch((error) => {
@@ -192,18 +205,34 @@ watch(userId, (newUserId) => {
       color: #fff;
       background-color: #007bff;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
 
     .register-button {
       background-color: #28a745;
     }
   }
+
+  .login-button:hover {
+    background-color: #0056b3;
+  }
+
+  .register-button:hover {
+    background-color: #218838;
+  }
 }
 
 @keyframes gradientAnimation {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>
-  

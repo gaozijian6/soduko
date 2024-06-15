@@ -1,7 +1,10 @@
 <template>
   <div class="container">
     <aside class="sidebar">
-      <h1>Welcome, {{ username }}</h1>
+      <div class="user-info">
+        <img :src="avatarUrl" alt="Avatar" class="avatar" />
+        <h1>{{ username }}</h1>
+      </div>
       <div class="search-friend">
         <label for="friendId">Enter Friend's ID:</label>
         <input type="text" v-model="friendId" required />
@@ -9,34 +12,22 @@
       </div>
       <div v-if="friendResult" class="friend-result">
         <p>Friend found: {{ friendResult.username }}</p>
-        <button
-          @click="
-            sendFriendRequest(friendResult.user_id, friendResult.username)
-          "
-        >
+        <button @click="
+          sendFriendRequest(friendResult.user_id, friendResult.username)
+          ">
           Send Friend Request
         </button>
       </div>
-      <div
-        v-if="newFriendRequest"
-        @click="showFriendRequestDialog"
-        class="new-request"
-      >
+      <div v-if="newFriendRequest" @click="showFriendRequestDialog" class="new-request">
         <p>You have a new friend request from {{ newFriendRequest.name }}</p>
       </div>
       <div class="friends-section">
         <h2>Your Friends</h2>
         <div class="friends-list">
-          <div
-            v-for="friend in friends"
-            :key="friend.id"
-            :class="{
-              'friend-item': true,
-              selected: friend.id === selectedFriend,
-            }"
-            @click="selectFriend(friend.id)"
-            @dblclick="startChatWithFriend(friend.id)"
-          >
+          <div v-for="friend in friends" :key="friend.id" :class="{
+          'friend-item': true,
+          selected: friend.id === selectedFriend,
+        }" @click="selectFriend(friend.id)" @dblclick="startChatWithFriend(friend.id)">
             {{ friend.username }}
           </div>
         </div>
@@ -44,20 +35,13 @@
       <button @click="logout" class="logout-button">Logout</button>
     </aside>
     <main class="main-content">
-      <ChatDialog
-        :show="showChat"
-        :currentFriend="currentFriend"
-        @close="closeChat"
-        :messages="messages"
-        @update:messages="updateMessages"
-        :sender_id="userId"
-        :receiver_id="selectedFriend"
-      />
+      <ChatDialog :show="showChat" :currentFriend="currentFriend" @close="closeChat" :messages="messages"
+        @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" />
     </main>
   </div>
 </template>
-  
-  <script setup>
+
+<script setup>
 import axios from "axios";
 import { ref, onMounted, onUnmounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -67,6 +51,7 @@ const router = useRouter();
 const route = useRoute();
 const userId = route.query.userId;
 const username = ref(route.query.username);
+const avatarUrl = ref(route.query.avatarUrl);
 const token = localStorage.getItem(`${userId}-token`);
 const newFriendRequest = reactive(null);
 const friendId = ref("");
@@ -320,7 +305,7 @@ const accessProtectedRoute = () => {
     });
 };
 </script>
-  
+
 <style scoped lang="less">
 .container {
   display: flex;
@@ -337,9 +322,24 @@ const accessProtectedRoute = () => {
     flex-direction: column;
     justify-content: space-between;
 
-    h1 {
-      font-size: 24px;
+    .user-info {
+      display: flex;
+      align-items: center;
       margin-bottom: 20px;
+      cursor: default;
+
+      .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-right: 10px;
+        cursor: pointer;
+      }
+
+      h1 {
+        font-size: 20px;
+        margin: 0;
+      }
     }
 
     .search-friend {
