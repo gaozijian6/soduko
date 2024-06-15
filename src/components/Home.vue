@@ -42,10 +42,11 @@
 </template>
 
 <script setup>
-import axios from "axios";
 import { ref, onMounted, onUnmounted, reactive } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ChatDialog from "./ChatDialog.vue";
+import apiClient from "@/aplClient";
+
 
 const router = useRouter();
 const route = useRoute();
@@ -141,13 +142,8 @@ const logout = () => {
   router.push({ name: "login" });
 };
 
-// 创建自定义的 axios 实例
-const apiClient = axios.create({
-  baseURL: "http://localhost:3000",
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
+// 设置请求头token
+apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
 const fetchConversations = (sender_id, receiver_id) => {
   apiClient

@@ -32,6 +32,7 @@
 import axios from "axios";
 import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import apiClient from '@/aplClient'
 
 const username = ref("");
 const userId = ref("");
@@ -45,8 +46,7 @@ const router = useRouter();
 onMounted(() => {
   axios.get('https://icanhazip.com')
     .then((response) => {
-      userIp.value = response.data;
-      console.log('User IP:', userIp.value);
+      userIp.value = response.data.trim();
     })
     .catch((error) => {
       console.error('Error fetching IP:', error);
@@ -54,8 +54,8 @@ onMounted(() => {
 });
 
 const login = () => {
-  axios
-    .post("http://localhost:3000/login", {
+  apiClient
+    .post('/login', {
       userId: userId.value,
       password: password.value,
       rememberPassword: rememberPassword.value,
@@ -66,20 +66,20 @@ const login = () => {
       if (data.token) {
         username.value = data.username;
         localStorage.setItem(`${userId.value}-token`, data.token);
-        alert("Login successful");
+        alert('Login successful');
         router.push({
-          name: "home",
+          name: 'home',
           query: { userId: userId.value, username: username.value, avatarUrl: avatarUrl.value },
         });
       } else {
-        alert("Login failed: " + (data.message || "Invalid credentials"));
+        alert('Login failed: ' + (data.message || 'Invalid credentials'));
       }
     })
     .catch((error) => {
-      console.error("Error:", error);
+      console.error('Error:', error);
       alert(
-        "Login failed: " +
-        (error.response.data.message || "Invalid credentials")
+        'Login failed: ' +
+        (error.response.data.message || 'Invalid credentials')
       );
     });
 };
@@ -94,27 +94,27 @@ const resetPassword = () => {
 
 watch(userId, (newUserId) => {
   if (newUserId.length === 6) {
-    axios
-      .get(`http://localhost:3000/avatar/${newUserId}`)
+    apiClient
+      .get(`/avatar/${newUserId}`)
       .then((response) => {
         if (response.data && response.data.avatarUrl) {
           avatarUrl.value = response.data.avatarUrl;
-          if (response.data.rememberPassword && userIp.value == response.data.userIp) {
+          if (response.data.rememberPassword && userIp.value === response.data.userIp) {
             password.value = response.data.password;
             rememberPassword.value = !!response.data.rememberPassword;
           }
         } else {
-          avatarUrl.value = "http://127.0.0.1:9000/image/qq.png";
+          avatarUrl.value = 'http://127.0.0.1:9000/image/qq.png';
           rememberPassword.value = false;
-          password.value = "";
+          password.value = '';
         }
       })
       .catch((error) => {
-        console.error("Error fetching avatar:", error);
-        avatarUrl.value = "http://127.0.0.1:9000/image/qq.png";
+        console.error('Error fetching avatar:', error);
+        avatarUrl.value = 'http://127.0.0.1:9000/image/qq.png';
       });
   } else {
-    avatarUrl.value = "http://127.0.0.1:9000/image/qq.png"
+    avatarUrl.value = 'http://127.0.0.1:9000/image/qq.png';
   }
 });
 
