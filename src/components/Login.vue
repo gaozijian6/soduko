@@ -37,6 +37,7 @@ import apiClient from '@/aplClient'
 const username = ref("");
 const userId = ref("");
 const password = ref("");
+const defaultAvatarUrl = ref("http://127.0.0.1:9000/image/qq.png")
 const avatarUrl = ref("http://127.0.0.1:9000/image/qq.png");
 const rememberPassword = ref(false);
 const userIp = ref("");
@@ -104,17 +105,19 @@ watch(userId, (newUserId) => {
             rememberPassword.value = !!response.data.rememberPassword;
           }
         } else {
-          avatarUrl.value = 'http://127.0.0.1:9000/image/qq.png';
+          avatarUrl.value = defaultAvatarUrl.value;
           rememberPassword.value = false;
           password.value = '';
         }
       })
       .catch((error) => {
         console.error('Error fetching avatar:', error);
-        avatarUrl.value = 'http://127.0.0.1:9000/image/qq.png';
+        avatarUrl.value = defaultAvatarUrl.value;
       });
   } else {
-    avatarUrl.value = 'http://127.0.0.1:9000/image/qq.png';
+    avatarUrl.value = defaultAvatarUrl.value;
+    password.value = '';
+    rememberPassword.value = false;
   }
 });
 

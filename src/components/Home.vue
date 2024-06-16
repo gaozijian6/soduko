@@ -19,7 +19,14 @@
         </button>
       </div>
       <div v-if="newFriendRequest" @click="showFriendRequestDialog" class="new-request">
-        <p>You have a new friend request from {{ newFriendRequest.name }}</p>
+        <p>You have a new friend request from {{ newFriendRequest.sender_username }}</p>
+      </div>
+      <div v-if="showDialog" class="dialog-overlay">
+        <div class="dialog">
+          <p>Do you want to accept the friend request from {{ newFriendRequest.sender_username }}?</p>
+          <button @click="handleFriendRequest('accepted')">Accept</button>
+          <button @click="handleFriendRequest('rejected')">Reject</button>
+        </div>
       </div>
       <div class="friends-section">
         <h2>Your Friends</h2>
@@ -27,34 +34,41 @@
           <div v-for="friend in friends" :key="friend.id" :class="{
           'friend-item': true,
           selected: friend.id === selectedFriend,
-        }" @click="selectFriend(friend.id)" @dblclick="startChatWithFriend(friend.id)">
+        }" @click="selectFriend(friend.id)" @dblclick="startChatWithFriend(friend.id)"
+            @contextmenu.prevent="openContextMenu($event, friend)">
+            <img :src="friend.avatar_url" alt="avatar" class="friend-avatar" />
             {{ friend.username }}
           </div>
+        </div>
+        <div v-if="contextMenuVisible" :style="{ top: `${contextMenuY}px`, left: `${contextMenuX}px` }"
+          class="context-menu">
+          <button @click="confirmDeleteFriend(selectedFriend)">删除好友</button>
+          <button @click="startChatWithFriend(selectedFriend)">开始对话</button>
         </div>
       </div>
       <button @click="logout" class="logout-button">Logout</button>
     </aside>
     <main class="main-content">
       <ChatDialog :show="showChat" :currentFriend="currentFriend" @close="closeChat" :messages="messages"
-        @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" />
+        @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" ref="chatDialog"/>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, reactive } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ChatDialog from "./ChatDialog.vue";
 import apiClient from "@/aplClient";
-
 
 const router = useRouter();
 const route = useRoute();
 const userId = route.query.userId;
 const username = ref(route.query.username);
-const avatarUrl = ref(route.query.avatarUrl);
+const defaultAvatarUrl = require('../assets/qq.png');
+const avatarUrl = ref(defaultAvatarUrl.value);
 const token = localStorage.getItem(`${userId}-token`);
-const newFriendRequest = reactive(null);
+const newFriendRequest = ref(null);
 const friendId = ref("");
 const friendResult = ref(null);
 const friends = ref([]);
@@ -63,9 +77,19 @@ const showChat = ref(false);
 const currentFriend = ref(null);
 const showDialog = ref(false);
 const messages = ref([]);
+const contextMenuVisible = ref(false);
+const contextMenuX = ref(0);
+const contextMenuY = ref(0);
+const chatDialog = ref(null);
+
 const ws = new WebSocket("ws://localhost:3000");
 
 onMounted(() => {
+  const queryAvatarUrl = route.query.avatarUrl;
+  if (queryAvatarUrl) {
+    avatarUrl.value = queryAvatarUrl;
+  }
+
   accessProtectedRoute();
   fetchFriends();
   checkForFriendRequests(); // 查询新好友请求
@@ -76,13 +100,15 @@ onMounted(() => {
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
-    console.log("Received message:", data.text);
-    if (data.type == "message") {
-      messages.value.push({
-        message: data.text,
-        sender_id: data.senderId,
-        receiver_id: userId,
-      });
+    messages.value.push(data);
+    if (data.type === "shake") {
+      if (chatDialog.value) {
+        console.log(data.sender_id);
+        startChatWithFriend(data.sender_id)
+        setTimeout(() => {
+          chatDialog.value.shakeFriendWindow();
+        }, 0);
+      }
     }
   };
 });
@@ -91,18 +117,50 @@ onUnmounted(() => {
   ws.close();
 });
 
-const updateMessages = (newMessage) => {
-  messages.value.push({
-    message: newMessage,
-    sender_id: userId,
-    receiver_id: selectedFriend.value,
-  });
-  ws.send(
-    JSON.stringify({
-      type: "message",
-      text: newMessage,
-      targetUserId: selectedFriend.value,
+const openContextMenu = (event, friend) => {
+  selectedFriend.value = friend.id;
+  contextMenuX.value = event.clientX;
+  contextMenuY.value = event.clientY;
+  contextMenuVisible.value = true;
+
+  document.addEventListener('click', closeContextMenu);
+};
+
+const closeContextMenu = () => {
+  contextMenuVisible.value = false;
+  document.removeEventListener('click', closeContextMenu);
+};
+
+const confirmDeleteFriend = (friendId) => {
+  const confirmed = confirm("确定要删除这个好友吗？");
+  if (confirmed) {
+    deleteFriend(friendId);
+  }
+};
+
+const deleteFriend = (friendId) => {
+  apiClient.delete(`/friends/${friendId}`, {
+    data: {
+      userId,
+    },
+  })
+    .then(response => {
+      // 删除成功后更新 friends 列表
+      friends.value = friends.value.filter(friend => friend.id !== friendId);
+      console.log('Friend deleted successfully:', response.data);
+      // 关闭右键菜单
+      closeContextMenu();
     })
+    .catch(error => {
+      // 错误处理
+      console.error('Error deleting friend:', error.response ? error.response.data : error.message);
+    });
+};
+
+const updateMessages = (newMessage) => {
+  messages.value.push(newMessage);
+  ws.send(
+    JSON.stringify(newMessage)
   );
 };
 
@@ -114,7 +172,7 @@ const startChatWithFriend = (friendId) => {
 const selectFriend = (friendId) => {
   selectedFriend.value = friendId;
   currentFriend.value = friends.value.find(
-    (friend) => friend.id === selectedFriend.value
+    (friend) => friend.id == selectedFriend.value
   );
   fetchConversations(userId, selectedFriend.value);
 };
@@ -124,9 +182,10 @@ const showFriendRequestDialog = () => {
 };
 
 const startChat = () => {
+  console.log(selectedFriend.value);
   if (selectedFriend.value) {
     currentFriend.value = friends.value.find(
-      (friend) => friend.id === selectedFriend.value
+      (friend) => friend.id == selectedFriend.value
     );
     showChat.value = true;
   }
@@ -245,17 +304,16 @@ const fetchFriends = () => {
 const handleFriendRequest = (action) => {
   apiClient
     .post("/handleFriendRequest", {
-      requestId: newFriendRequest.id,
+      requestId: newFriendRequest.value.id,
       action: action,
     })
     .then(() => {
       if (action === "accepted") {
-        alert("Friend request accepted");
         fetchFriends(); // 更新好友列表
       } else {
         alert("Friend request rejected");
       }
-      newFriendRequest = null; // 重置新好友请求
+      newFriendRequest.value = null; // 重置新好友请求
       showDialog.value = false; // 关闭对话框
     })
     .catch((error) => {
@@ -272,7 +330,7 @@ const checkForFriendRequests = () => {
     .then((response) => {
       if (response.data.length > 0) {
         console.log(response.data);
-        newFriendRequest = response.data[0]; // 假设只处理第一个请求
+        newFriendRequest.value = response.data[0]; // 假设只处理第一个请求
       }
     })
     .catch((error) => {
@@ -317,6 +375,71 @@ const accessProtectedRoute = () => {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+
+      .dialog {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        max-width: 300px;
+        width: 100%;
+        animation: fadeIn 0.5s ease;
+        color: black;
+
+        p {
+          font-size: 16px;
+          margin-bottom: 20px;
+        }
+
+        button {
+          background: #007bff;
+          color: #fff;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          margin: 0 10px;
+          transition: background 0.3s ease;
+
+          &:hover {
+            background: #0056b3;
+          }
+
+          &:last-child {
+            background: #dc3545;
+
+            &:hover {
+              background: #c82333;
+            }
+          }
+        }
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
 
     .user-info {
       display: flex;
@@ -409,6 +532,8 @@ const accessProtectedRoute = () => {
         background-color: #34495e;
 
         .friend-item {
+          display: flex;
+          align-items: center;
           padding: 10px;
           border-bottom: 1px solid #7f8c8d;
           cursor: pointer;
@@ -421,6 +546,34 @@ const accessProtectedRoute = () => {
           &.selected {
             background-color: #2980b9;
             color: #ecf0f1;
+          }
+
+          .friend-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+          }
+        }
+      }
+
+      .context-menu {
+        position: absolute;
+        background-color: white;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+
+        button {
+          display: block;
+          width: 100%;
+          padding: 8px 16px;
+          border: none;
+          background: none;
+          cursor: pointer;
+
+          &:hover {
+            background-color: #f0f0f0;
           }
         }
       }

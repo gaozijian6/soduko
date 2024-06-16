@@ -41,6 +41,7 @@ const clients = new Map();
 wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         const data = JSON.parse(message);
+        console.log(data);
 
         if (data.type === "identify") {
             ws.userId = data.userId;
@@ -48,17 +49,17 @@ wss.on('connection', (ws) => {
             console.log(`User connected: ${ws.userId}`);
         }
 
-        if (data.type === "message") {
-            console.log(`Received message from user ${ws.userId} to user ${data.targetUserId}: ${data.text}`);
-            const targetWs = clients.get(String(data.targetUserId));
+        else {
+            console.log(`Received message from user ${ws.userId} to user ${data.receiver_id}: ${data.text}`);
+            const targetWs = clients.get(String(data.receiver_id));
 
             // 生成当前时间戳
             const timestamp = new Date();
 
             // 存储消息到数据库
             connection.query(
-                'INSERT INTO messages (sender_id, receiver_id, message, timestamp) VALUES (?, ?, ?, ?)',
-                [ws.userId, data.targetUserId, data.text, timestamp],
+                'INSERT INTO messages (sender_id, receiver_id, message, type, timestamp) VALUES (?, ?, ?, ?, ?)',
+                [ws.userId, data.receiver_id, data.message, data.type, timestamp],
                 (err, results) => {
                     if (err) {
                         console.error('Error inserting message into MySQL:', err);
@@ -69,8 +70,8 @@ wss.on('connection', (ws) => {
             );
 
             if (targetWs && targetWs.readyState === WebSocket.OPEN) {
-                console.log(`Sending message to user ${data.targetUserId}`);
-                targetWs.send(JSON.stringify({ type: "message", text: data.text, timestamp: timestamp, senderId: ws.userId }));
+                console.log(`Sending message to user ${data.receiver_id}`);
+                targetWs.send(JSON.stringify({ type: data.type, message: data.message, timestamp: timestamp, sender_id: ws.userId }));
             }
 
         }
@@ -84,6 +85,52 @@ wss.on('connection', (ws) => {
 
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+// 删除好友路由
+app.delete('/friends/:friendId', (req, res) => {
+    const { friendId } = req.params;
+    const { userId } = req.body;
+
+    // 获取对应的 user_id 和 friend_id
+    connection.query('SELECT user_id, friend_id FROM friends WHERE user_id = ? AND friend_id = ? OR user_id = ? AND friend_id = ?', 
+        [userId, friendId, friendId, userId], (err, results) => {
+        if (err) {
+            console.error('Error querying MySQL:', err);
+            res.status(500).json({ message: 'Internal server error' });
+            return;
+        }
+
+        if (results.length > 0) {
+            // 删除 friends 表中的记录
+            connection.query('DELETE FROM friends WHERE (user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)', 
+                [userId, friendId, friendId, userId], (err, results) => {
+                if (err) {
+                    console.error('Error deleting friends:', err);
+                }
+            });
+
+            // 删除 messages 表中的记录
+            connection.query('DELETE FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)', 
+                [userId, friendId, friendId, userId], (err, results) => {
+                if (err) {
+                    console.error('Error deleting messages:', err);
+                }
+            });
+
+            // 删除 friend_requests 表中的记录
+            connection.query('DELETE FROM friend_requests WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)', 
+                [userId, friendId, friendId, userId], (err, results) => {
+                if (err) {
+                    console.error('Error deleting friend requests:', err);
+                }
+            });
+
+            res.json({ message: 'Friend and related data deleted successfully' });
+        } else {
+            res.status(404).json({ message: 'Friend not found' });
+        }
+    });
 });
 
 // 获取用户头像
@@ -455,7 +502,7 @@ app.post('/handleFriendRequest', (req, res) => {
 app.get('/friends', (req, res) => {
     const { userId } = req.query;
 
-    connection.query('SELECT u.id, u.username FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ?', [userId], (err, results) => {
+    connection.query('SELECT * FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ?', [userId], (err, results) => {
         if (err) {
             console.error('Error querying MySQL:', err);
             return res.status(500).json({ message: 'Internal server error' });
@@ -468,13 +515,14 @@ app.get('/friends', (req, res) => {
 // 查询好友请求路由
 app.get('/friendRequests', (req, res) => {
     const { receiverId, status } = req.query;
+    console.log(receiverId, status);
 
     connection.query('SELECT * FROM friend_requests WHERE receiver_id = ? AND status = ?', [receiverId, status], (err, results) => {
         if (err) {
             console.error('Error querying MySQL:', err);
             return res.status(500).json({ message: 'Internal server error' });
         }
-
+        console.log(results);
         res.json(results);
     });
 });

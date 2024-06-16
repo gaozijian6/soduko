@@ -5,38 +5,36 @@
       <button @click="closeChat">关闭</button>
     </div>
     <div class="chat-body" ref="chatBody">
-      <div
-        v-for="message in messages"
-        :key="message.id"
-        :class="{
-          'message-sent': message.sender_id == sender_id,
-          'message-received': message.sender_id != sender_id,
-        }"
-      >
-        <span class="message-content">{{ message.message }}</span>
-      </div>
+      <template v-for="message in messages" :key="message.id">
+        <div v-if="message.type === 'message'" :class="{
+    'message-sent': message.sender_id == sender_id,
+    'message-received': message.sender_id != sender_id,
+  }">
+          <span class="message-content">{{ message.message }}</span>
+        </div>
+      </template>
     </div>
     <div class="chat-footer">
       <div class="footer-top">
         <button ref="emojiButton" class="emoji-button" @click="toggleEmojiPicker">😊</button>
-        <EmojiPicker v-if="showEmojiPicker" @select="addEmoji" @close="closeEmojiPicker" :emojiButton="emojiButton"/>
+        <EmojiPicker v-if="showEmojiPicker" @select="addEmoji" @close="closeEmojiPicker" :emojiButton="emojiButton" />
+        <button @click="shakeMyWindow" class="shake-button">
+          <img src="../assets/shake.png" alt="shake" class="shake-icon" />
+        </button>
       </div>
       <div class="footer-middle">
         <textarea v-model="newMessage" placeholder="输入消息..." />
 
       </div>
       <div class="footer-down">
-        <button @click="sendMessage" class="send-button">发送</button>
+        <button @click="sendMessage('message')" class="send-button">发送</button>
         <button @click="closeChat" class="close-button">关闭</button>
       </div>
     </div>
   </div>
 </template>
 
-
-
-  
-  <script setup>
+<script setup>
 import { ref, watch, onMounted, nextTick } from "vue";
 import EmojiPicker from './EmojiPicker.vue';
 
@@ -73,6 +71,40 @@ watch(
   { deep: true }
 );
 
+const shakeWindow = () => {
+  const duration = 100; // 抖动持续时间
+  const intensity = 10; // 抖动强度
+  const windowElement = document.querySelector('.chat-dialog'); // 替换为窗口的实际类名
+
+  if (windowElement) {
+    windowElement.style.position = 'fixed';
+    const startTime = Date.now();
+    const originalTransform = windowElement.style.transform;
+
+    const shake = () => {
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < duration) {
+        const x = (Math.random() - 0.5) * intensity;
+        const y = (Math.random() - 0.5) * intensity;
+        windowElement.style.transform = `translate(${x}px, ${y}px)`;
+        requestAnimationFrame(shake);
+      } else {
+        windowElement.style.transform = originalTransform;
+      }
+    };
+    shake();
+  }
+};
+
+const shakeMyWindow = () => {
+  shakeWindow();
+  sendMessage("shake");
+};
+
+const shakeFriendWindow = () => {
+  shakeWindow();
+};
+
 const toggleEmojiPicker = () => {
   showEmojiPicker.value = !showEmojiPicker.value;
 };
@@ -96,19 +128,21 @@ const closeChat = () => {
   emit("close");
 };
 
-const sendMessage = () => {
-  if (newMessage.value.trim() !== "") {
-    emit("update:messages", newMessage.value);
-    newMessage.value = "";
-  }
+const sendMessage = (type = "text") => {
+  emit("update:messages", { message: newMessage.value.trim(), type, sender_id: props.sender_id, receiver_id: props.receiver_id });
+  newMessage.value = "";
 };
 
 onMounted(() => {
   console.log('emojiButton onMounted:', emojiButton.value);
 });
+
+defineExpose({
+  shakeFriendWindow
+});
 </script>
-  
-  <style scoped lang="less">
+
+<style scoped lang="less">
 .chat-dialog {
   position: fixed;
   right: 20px;
@@ -203,9 +237,29 @@ onMounted(() => {
         font-size: 20px;
         cursor: pointer;
         color: #555;
+        transform: translateY(-2px);
 
         &:hover {
           color: #333;
+        }
+      }
+
+      .shake-button {
+        background-color: transparent;
+        border: none;
+        padding: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .shake-icon {
+          width: 20px;
+          height: 20px;
         }
       }
     }
@@ -222,7 +276,7 @@ onMounted(() => {
         outline: none;
         font-size: 14px;
         height: 60px;
-    }
+      }
     }
 
     .footer-down {
@@ -260,6 +314,4 @@ onMounted(() => {
     }
   }
 }
-
 </style>
-  
