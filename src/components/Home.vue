@@ -2,8 +2,11 @@
   <div class="container">
     <aside class="sidebar">
       <div class="user-info">
-        <img :src="avatarUrl" alt="Avatar" class="avatar" />
-        <h1>{{ username }}</h1>
+        <img :src="avatarUrl" alt="Avatar" class="avatar" @dblclick="showAvatarDialog" />
+        <AvatarDialog :avatarUrl="avatarUrl" v-if="dialogVisible" @close="closeAvatarDialog"
+          @changeAvatar="handleChangeAvatar" />
+        <h1 v-if="!editing" @dblclick="edit">{{ username }}</h1>
+        <input class="edit-input" v-else v-model="username" @blur="save" @keyup.enter="save" ref="editInput" />
       </div>
       <div class="search-friend">
         <label for="friendId">Enter Friend's ID:</label>
@@ -50,15 +53,16 @@
     </aside>
     <main class="main-content">
       <ChatDialog :show="showChat" :currentFriend="currentFriend" @close="closeChat" :messages="messages"
-        @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" ref="chatDialog"/>
+        @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" ref="chatDialog" />
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ChatDialog from "./ChatDialog.vue";
+import AvatarDialog from './AvatarDialog.vue';
 import apiClient from "@/aplClient";
 
 const router = useRouter();
@@ -81,6 +85,9 @@ const contextMenuVisible = ref(false);
 const contextMenuX = ref(0);
 const contextMenuY = ref(0);
 const chatDialog = ref(null);
+const dialogVisible = ref(false);
+const editing = ref(false);
+const editInput = ref(null);
 
 const ws = new WebSocket("ws://localhost:3000");
 
@@ -103,11 +110,10 @@ onMounted(() => {
     messages.value.push(data);
     if (data.type === "shake") {
       if (chatDialog.value) {
-        console.log(data.sender_id);
         startChatWithFriend(data.sender_id)
-        setTimeout(() => {
+        nextTick(() => {
           chatDialog.value.shakeFriendWindow();
-        }, 0);
+        });
       }
     }
   };
@@ -116,6 +122,11 @@ onMounted(() => {
 onUnmounted(() => {
   ws.close();
 });
+
+const handleChangeAvatar = () => {
+  // 在这里添加更换头像的逻辑，例如打开文件选择器或跳转到更换头像页面
+  console.log('Change Avatar button clicked');
+};
 
 const openContextMenu = (event, friend) => {
   selectedFriend.value = friend.id;
@@ -358,6 +369,41 @@ const accessProtectedRoute = () => {
       router.push({ name: "login" });
     });
 };
+
+const showAvatarDialog = () => {
+  dialogVisible.value = true;
+};
+
+const closeAvatarDialog = () => {
+  dialogVisible.value = false;
+};
+
+const edit = () => {
+  editing.value = true;
+  nextTick(() => {
+    editInput.value.focus();
+  });
+};
+
+const save = () => {
+  editing.value = false;
+  if(!username.value.trim()) {
+    username.value = route.query.username;
+    return;
+  }
+  apiClient.put('/update-username', {user_id: userId, username: username.value })
+    .then(response => {
+      if (response.data.success) {
+        console.log('Username updated successfully');
+      } else {
+        console.error('Failed to update username');
+      }
+    })
+    .catch(error => {
+      console.error('Error updating username:', error);
+    });
+};
+
 </script>
 
 <style scoped lang="less">
@@ -458,6 +504,29 @@ const accessProtectedRoute = () => {
       h1 {
         font-size: 20px;
         margin: 0;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .edit-input {
+        font-size: 1em;
+        padding: 5px;
+        margin: 5px 0;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.3s, box-shadow 0.3s;
+        outline: none;
+      }
+
+      .edit-input:focus {
+        border-color: #4A90E2;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      ::selection {
+        background: transparent;
+        /* 取消文本选中高亮背景 */
       }
     }
 

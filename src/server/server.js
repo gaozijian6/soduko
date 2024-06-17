@@ -87,6 +87,34 @@ server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
+// 更新用户名的路由
+app.put('/update-username', (req, res) => {
+    const { user_id, username } = req.body;
+  
+    if (!user_id || !username) {
+      return res.status(400).json({ success: false, message: 'User ID and username are required' });
+    }
+  
+    // 更新用户名
+    connection.query(
+      'UPDATE users SET username = ? WHERE user_id = ?',
+      [username, user_id],
+      (err, results) => {
+        if (err) {
+          console.error('Error updating username:', err);
+          return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+  
+        if (results.affectedRows === 0) {
+          return res.status(404).json({ success: false, message: 'User not found' });
+        }
+  
+        res.json({ success: true, message: 'Username updated successfully' });
+      }
+    );
+  });
+  
+
 // 删除好友路由
 app.delete('/friends/:friendId', (req, res) => {
     const { friendId } = req.params;
