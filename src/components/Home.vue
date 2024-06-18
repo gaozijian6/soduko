@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <aside class="sidebar">
+    <aside class="sidebar" ref="sidebar">
       <div class="user-info">
         <img :src="avatarUrl" alt="Avatar" class="avatar" @dblclick="showAvatarDialog" />
         <AvatarDialog :avatarUrl="avatarUrl" v-if="dialogVisible" @close="closeAvatarDialog"
@@ -8,31 +8,15 @@
         <h1 v-if="!editing" @dblclick="edit">{{ username }}</h1>
         <input class="edit-input" v-else v-model="username" @blur="save" @keyup.enter="save" ref="editInput" />
       </div>
-      <div class="search-friend">
-        <label for="friendId">Enter Friend's ID:</label>
-        <input type="text" v-model="friendId" required />
-        <button @click="findFriend">Find Friend</button>
+      <div class="toolbar">
+        <span @click="showSection('friends')" :class="{ active: currentSection === 'friends' }">您的好友</span>
+        <span @click="showSection('search')" :class="{ active: currentSection === 'search' }">查找朋友</span>
+        <span @click="showSection('requests')" :class="{ active: currentSection === 'requests' }">新的申请</span>
+        <div class="slider" :style="sliderStyle"></div>
       </div>
-      <div v-if="friendResult" class="friend-result">
-        <p>Friend found: {{ friendResult.username }}</p>
-        <button @click="
-          sendFriendRequest(friendResult.user_id, friendResult.username)
-          ">
-          Send Friend Request
-        </button>
-      </div>
-      <div v-if="newFriendRequest" @click="showFriendRequestDialog" class="new-request">
-        <p>You have a new friend request from {{ newFriendRequest.sender_username }}</p>
-      </div>
-      <div v-if="showDialog" class="dialog-overlay">
-        <div class="dialog">
-          <p>Do you want to accept the friend request from {{ newFriendRequest.sender_username }}?</p>
-          <button @click="handleFriendRequest('accepted')">Accept</button>
-          <button @click="handleFriendRequest('rejected')">Reject</button>
-        </div>
-      </div>
-      <div class="friends-section">
-        <h2>Your Friends</h2>
+
+      <div v-if="currentSection === 'friends'" class="friends-section">
+        <h2>你的好友</h2>
         <div class="friends-list">
           <div v-for="friend in friends" :key="friend.id" :class="{
           'friend-item': true,
@@ -49,14 +33,47 @@
           <button @click="startChatWithFriend(selectedFriend)">开始对话</button>
         </div>
       </div>
-      <button @click="logout" class="logout-button">Logout</button>
+
+      <div v-if="currentSection === 'search'" class="search-friend">
+        <label for="friendId">输入朋友的ID：</label>
+        <input type="text" v-model="friendId" required />
+        <button @click="findFriend">查找朋友</button>
+      </div>
+      <div v-if="friendResult && currentSection === 'search'" class="friend-result">
+        <p>找到朋友：{{ friendResult.username }}</p>
+        <button @click="
+          sendFriendRequest(friendResult.user_id, friendResult.username)
+          ">
+          发送好友请求
+        </button>
+      </div>
+
+      <div v-if="currentSection === 'requests'" class="new-request">
+        <div v-if="newFriendRequest" class="friendRequest-list">
+          <p>你有{{ newFriendRequest.length }}个新的好友请求</p>
+          <div class="friendRequest-list-item" v-for="newFriend in newFriendRequest" :key="newFriend.id"
+            @click="showFriendRequestDialog(newFriend)">
+            {{ newFriend.sender_username }}
+          </div>
+        </div>
+      </div>
+
+      <div v-if="showDialog" class="dialog-overlay">
+        <div class="dialog">
+          <button class="close-button" @click="showDialog = false">×</button>
+          <p>你想要接受来自 {{ newFriend2 }} 的好友请求吗？</p>
+          <button @click="handleFriendRequest('accepted')">接受</button>
+          <button @click="handleFriendRequest('rejected')">拒绝</button>
+        </div>
+      </div>
+
+      <button @click="logout" class="logout-button">登出</button>
     </aside>
-    <main class="main-content">
-      <ChatDialog :show="showChat" :currentFriend="currentFriend" @close="closeChat" :messages="messages"
-        @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" ref="chatDialog" />
-    </main>
+    <ChatDialog :show="showChat" :currentFriend="currentFriend" @close="closeChat" :messages="messages"
+      @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" ref="chatDialog" />
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
@@ -64,6 +81,7 @@ import { useRoute, useRouter } from "vue-router";
 import ChatDialog from "./ChatDialog.vue";
 import AvatarDialog from './AvatarDialog.vue';
 import apiClient from "@/aplClient";
+import { useDraggable } from '../util.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -88,10 +106,16 @@ const chatDialog = ref(null);
 const dialogVisible = ref(false);
 const editing = ref(false);
 const editInput = ref(null);
+const currentSection = ref('friends');
+const sliderStyle = ref({ left: '0%', width: '0%' });
+const newFriend2 = ref('');
+const sidebar = ref(null);
 
 const ws = new WebSocket("ws://localhost:3000");
+useDraggable(sidebar);
 
 onMounted(() => {
+  showSection(currentSection.value);
   const queryAvatarUrl = route.query.avatarUrl;
   if (queryAvatarUrl) {
     avatarUrl.value = queryAvatarUrl;
@@ -122,6 +146,22 @@ onMounted(() => {
 onUnmounted(() => {
   ws.close();
 });
+
+const showSection = (section) => {
+  currentSection.value = section;
+
+  // 获取当前点击的 span 元素
+  nextTick(() => {
+    const activeSpan = document.querySelector('.toolbar .active');
+    if (activeSpan) {
+      const { offsetLeft, offsetWidth } = activeSpan;
+      sliderStyle.value = {
+        left: `${offsetLeft}px`,
+        width: `${offsetWidth}px`,
+      };
+    }
+  });
+};
 
 const handleChangeAvatar = () => {
   // 在这里添加更换头像的逻辑，例如打开文件选择器或跳转到更换头像页面
@@ -188,8 +228,9 @@ const selectFriend = (friendId) => {
   fetchConversations(userId, selectedFriend.value);
 };
 
-const showFriendRequestDialog = () => {
+const showFriendRequestDialog = (newFriend) => {
   showDialog.value = true;
+  newFriend2.value = newFriend.sender_username;
 };
 
 const startChat = () => {
@@ -341,7 +382,7 @@ const checkForFriendRequests = () => {
     .then((response) => {
       if (response.data.length > 0) {
         console.log(response.data);
-        newFriendRequest.value = response.data[0]; // 假设只处理第一个请求
+        newFriendRequest.value = response.data; // 假设只处理第一个请求
       }
     })
     .catch((error) => {
@@ -387,11 +428,11 @@ const edit = () => {
 
 const save = () => {
   editing.value = false;
-  if(!username.value.trim()) {
+  if (!username.value.trim()) {
     username.value = route.query.username;
     return;
   }
-  apiClient.put('/update-username', {user_id: userId, username: username.value })
+  apiClient.put('/update-username', { user_id: userId, username: username.value })
     .then(response => {
       if (response.data.success) {
         console.log('Username updated successfully');
@@ -414,13 +455,15 @@ const save = () => {
 
   .sidebar {
     width: 300px;
-    background-color: #2c3e50;
+    height: 700px;
+    background-color: #34495e;
     color: #ecf0f1;
-    padding: 20px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding: 20px 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
+    border-radius: 8px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
 
     .dialog-overlay {
       position: fixed;
@@ -440,10 +483,11 @@ const save = () => {
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         text-align: center;
-        max-width: 300px;
+        max-width: 400px;
         width: 100%;
         animation: fadeIn 0.5s ease;
         color: black;
+        position: relative;
 
         p {
           font-size: 16px;
@@ -472,6 +516,22 @@ const save = () => {
             }
           }
         }
+
+        .close-button {
+          position: absolute;
+          top: 5px;
+          right: 0px;
+          background: none;
+          border: none;
+          font-size: 20px;
+          cursor: pointer;
+          color: #000;
+
+          &:hover {
+            background: #979797;
+          }
+        }
+
       }
     }
 
@@ -492,6 +552,7 @@ const save = () => {
       align-items: center;
       margin-bottom: 20px;
       cursor: default;
+      padding: 0 20px;
 
       .avatar {
         width: 50px;
@@ -530,8 +591,37 @@ const save = () => {
       }
     }
 
+    .toolbar {
+      width: calc(100% - 20px);
+      height: 40px;
+      display: flex;
+      padding: 0 10px;
+      position: relative;
+
+      span {
+        flex: 1;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        font-size: 16px;
+        color: #ffffff;
+
+      }
+
+      .slider {
+        position: absolute;
+        bottom: 0;
+        height: 2px;
+        background-color: #1e90ff;
+        transition: left 0.3s ease, width 0.3s ease;
+      }
+    }
+
     .search-friend {
       margin-bottom: 20px;
+      flex-grow: 1;
 
       input {
         width: calc(100% - 20px);
@@ -583,11 +673,45 @@ const save = () => {
     }
 
     .new-request {
-      background-color: #f39c12;
+      // background-color: #f39c12;
       padding: 10px;
       border-radius: 5px;
       cursor: pointer;
       margin-bottom: 20px;
+      flex-grow: 1;
+
+      .friendRequest-list {
+        background-color: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+        cursor: pointer;
+
+        p {
+          font-size: 16px;
+          font-weight: bold;
+          margin-bottom: 10px;
+          color: #333;
+        }
+
+        .friendRequest-list-item {
+          background-color: #fff;
+          border: 1px solid #ddd;
+          border-radius: 3px;
+          padding: 8px;
+          margin-bottom: 5px;
+          transition: background-color 0.3s ease;
+
+          &:hover {
+            background-color: #e6e6e6;
+          }
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
     }
 
     .friends-section {
