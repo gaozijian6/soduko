@@ -1,6 +1,6 @@
 import { onMounted, onBeforeUnmount } from 'vue';
 
-export function useDraggable(elementRef) {
+export function useDraggable(parentRef, sonRef) {
   let isDragging = false;
   let startX = 0;
   let startY = 0;
@@ -8,12 +8,12 @@ export function useDraggable(elementRef) {
   let initialTop = 0;
 
   const startDrag = (e) => {
-    if (e.target !== elementRef.value) return;
+    if (e.target !== sonRef.value) return;
     isDragging = true;
     startX = e.clientX;
     startY = e.clientY;
-    initialLeft = elementRef.value.offsetLeft;
-    initialTop = elementRef.value.offsetTop;
+    initialLeft = parentRef.value.offsetLeft;
+    initialTop = parentRef.value.offsetTop;
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', stopDrag);
   };
@@ -22,8 +22,8 @@ export function useDraggable(elementRef) {
     if (isDragging) {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      elementRef.value.style.left = `${initialLeft + dx}px`;
-      elementRef.value.style.top = `${initialTop + dy}px`;
+      parentRef.value.style.left = `${initialLeft + dx}px`;
+      parentRef.value.style.top = `${initialTop + dy}px`;
     }
   };
 
@@ -34,13 +34,17 @@ export function useDraggable(elementRef) {
   };
 
   onMounted(() => {
-    elementRef.value.style.position = 'absolute';
-    elementRef.value.addEventListener('mousedown', startDrag);
+    if (parentRef.value && sonRef.value) {
+      parentRef.value.style.position = 'absolute';
+      sonRef.value.addEventListener('mousedown', startDrag);
+    }
   });
 
   onBeforeUnmount(() => {
-    document.removeEventListener('mousemove', onDrag);
-    document.removeEventListener('mouseup', stopDrag);
-    elementRef.value.removeEventListener('mousedown', startDrag);
+    if (sonRef.value) {
+      document.removeEventListener('mousemove', onDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      sonRef.value.removeEventListener('mousedown', startDrag);
+    }
   });
 }

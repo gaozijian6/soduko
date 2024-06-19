@@ -10,7 +10,7 @@
       </div>
       <div class="toolbar">
         <span @click="showSection('friends')" :class="{ active: currentSection === 'friends' }">您的好友</span>
-        <span @click="showSection('search')" :class="{ active: currentSection === 'search' }">查找朋友</span>
+        <span @click="showSection('search')" :class="{ active: currentSection === 'search' }">添加好友</span>
         <span @click="showSection('requests')" :class="{ active: currentSection === 'requests' }">新的申请</span>
         <div class="slider" :style="sliderStyle"></div>
       </div>
@@ -35,11 +35,11 @@
       </div>
 
       <div v-if="currentSection === 'search'" class="search-friend">
-        <label for="friendId">输入朋友的ID：</label>
+        <label for="friendId">输入您想要添加的朋友ID：</label>
         <input type="text" v-model="friendId" required />
-        <button @click="findFriend">查找朋友</button>
+        <button @click="findFriend">添加好友</button>
       </div>
-      <div v-if="friendResult && currentSection === 'search'" class="friend-result">
+      <div v-if="Object.keys(friendResult).length && currentSection === 'search'" class="friend-result">
         <p>找到朋友：{{ friendResult.username }}</p>
         <button @click="
           sendFriendRequest(friendResult.user_id, friendResult.username)
@@ -69,7 +69,7 @@
 
       <button @click="logout" class="logout-button">登出</button>
     </aside>
-    <ChatDialog :show="showChat" :currentFriend="currentFriend" @close="closeChat" :messages="messages"
+    <ChatDialog v-if="showChat" :currentFriend="currentFriend" @close="closeChat" :messages="messages"
       @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" ref="chatDialog" />
   </div>
 </template>
@@ -90,9 +90,9 @@ const username = ref(route.query.username);
 const defaultAvatarUrl = require('../assets/qq.png');
 const avatarUrl = ref(defaultAvatarUrl.value);
 const token = localStorage.getItem(`${userId}-token`);
-const newFriendRequest = ref(null);
+const newFriendRequest = ref([]);
 const friendId = ref("");
-const friendResult = ref(null);
+const friendResult = ref({});
 const friends = ref([]);
 const selectedFriend = ref(null);
 const showChat = ref(false);
@@ -110,9 +110,10 @@ const currentSection = ref('friends');
 const sliderStyle = ref({ left: '0%', width: '0%' });
 const newFriend2 = ref('');
 const sidebar = ref(null);
+const requestId = ref(null);
 
 const ws = new WebSocket("ws://localhost:3000");
-useDraggable(sidebar);
+useDraggable(sidebar,sidebar);
 
 onMounted(() => {
   showSection(currentSection.value);
@@ -225,12 +226,14 @@ const selectFriend = (friendId) => {
   currentFriend.value = friends.value.find(
     (friend) => friend.id == selectedFriend.value
   );
+  console.log(currentFriend.value);
   fetchConversations(userId, selectedFriend.value);
 };
 
 const showFriendRequestDialog = (newFriend) => {
   showDialog.value = true;
   newFriend2.value = newFriend.sender_username;
+  requestId.value = newFriend.id;
 };
 
 const startChat = () => {
@@ -271,6 +274,7 @@ const fetchConversations = (sender_id, receiver_id) => {
 
 // 查找好友
 const findFriend = () => {
+  friendResult.value = {};
   if (!friendId.value) {
     alert("Please enter a friend's name");
     return;
@@ -356,16 +360,17 @@ const fetchFriends = () => {
 const handleFriendRequest = (action) => {
   apiClient
     .post("/handleFriendRequest", {
-      requestId: newFriendRequest.value.id,
+      requestId: requestId.value,
       action: action,
     })
     .then(() => {
       if (action === "accepted") {
         fetchFriends(); // 更新好友列表
       } else {
-        alert("Friend request rejected");
+        newFriendRequest.value = newFriendRequest.value.filter(
+          (request) => request.id != requestId.value
+        );
       }
-      newFriendRequest.value = null; // 重置新好友请求
       showDialog.value = false; // 关闭对话框
     })
     .catch((error) => {
@@ -381,7 +386,6 @@ const checkForFriendRequests = () => {
     })
     .then((response) => {
       if (response.data.length > 0) {
-        console.log(response.data);
         newFriendRequest.value = response.data; // 假设只处理第一个请求
       }
     })
@@ -452,6 +456,7 @@ const save = () => {
   display: flex;
   height: 100vh;
   background-color: #f9f9f9;
+  position: relative;
 
   .sidebar {
     width: 300px;
@@ -461,9 +466,9 @@ const save = () => {
     padding: 20px 0;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
     border-radius: 8px;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    align-items: center;
 
     .dialog-overlay {
       position: fixed;
@@ -548,8 +553,12 @@ const save = () => {
     }
 
     .user-info {
+      width: calc(100% - 40px);
+      height: 60px;
+      padding: 0 10px;
       display: flex;
       align-items: center;
+      justify-content: flex-start;
       margin-bottom: 20px;
       cursor: default;
       padding: 0 20px;
@@ -592,10 +601,12 @@ const save = () => {
     }
 
     .toolbar {
-      width: calc(100% - 20px);
+      width: 100%;
       height: 40px;
       display: flex;
-      padding: 0 10px;
+      background-color: #2c3e50; // 增加背景颜色
+      border-radius: 5px; // 增加圆角
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // 增加阴影效果
       position: relative;
 
       span {
@@ -607,21 +618,28 @@ const save = () => {
         position: relative;
         font-size: 16px;
         color: #ffffff;
+        transition: color 0.3s; // 增加颜色过渡效果
 
+        &:hover {
+          color: #1e90ff; // 增加悬停效果
+        }
       }
 
       .slider {
         position: absolute;
         bottom: 0;
         height: 2px;
+        width: 33.33%;
         background-color: #1e90ff;
         transition: left 0.3s ease, width 0.3s ease;
+        left: -14px;
       }
     }
 
     .search-friend {
       margin-bottom: 20px;
       flex-grow: 1;
+      width: 90%;
 
       input {
         width: calc(100% - 20px);
@@ -673,7 +691,7 @@ const save = () => {
     }
 
     .new-request {
-      // background-color: #f39c12;
+      width: 90%;
       padding: 10px;
       border-radius: 5px;
       cursor: pointer;
@@ -715,7 +733,9 @@ const save = () => {
     }
 
     .friends-section {
+      padding: 0 10px;
       flex-grow: 1;
+      width: 90%;
 
       .friends-list {
         border: 1px solid #7f8c8d;
@@ -751,11 +771,12 @@ const save = () => {
       }
 
       .context-menu {
-        position: absolute;
+        position: fixed;
         background-color: white;
         border: 1px solid #ccc;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         z-index: 1000;
+        width: 90px;
 
         button {
           display: block;
@@ -773,6 +794,7 @@ const save = () => {
     }
 
     .logout-button {
+      width: 80%;
       background-color: #e74c3c;
       color: #ecf0f1;
       padding: 10px;

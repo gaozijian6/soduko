@@ -530,12 +530,11 @@ app.post('/handleFriendRequest', (req, res) => {
 app.get('/friends', (req, res) => {
     const { userId } = req.query;
 
-    connection.query('SELECT * FROM friends f JOIN users u ON f.friend_id = u.id WHERE f.user_id = ?', [userId], (err, results) => {
+    connection.query('SELECT * FROM friends f JOIN users u ON f.friend_id = u.user_id WHERE f.user_id = ?', [userId], (err, results) => {
         if (err) {
             console.error('Error querying MySQL:', err);
             return res.status(500).json({ message: 'Internal server error' });
         }
-
         res.json({ friends: results });
     });
 });

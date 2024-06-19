@@ -1,15 +1,18 @@
 <template>
-  <div v-if="show" class="chat-dialog">
-    <div class="chat-header">
-      <span>与 {{ currentFriend.username }} 对话中</span>
+  <div class="chat-dialog" ref="chatDialog">
+    <div class="chat-header" ref="chatHeader">
+      <div class="left">
+        <img :src="currentFriend.avatar_url" alt="" class="friend-avatar">
+        <span>与 {{ currentFriend.username }} 对话中</span>
+      </div>
       <button @click="closeChat">关闭</button>
     </div>
     <div class="chat-body" ref="chatBody">
       <template v-for="message in messages" :key="message.id">
         <div v-if="message.type === 'message'" :class="{
-    'message-sent': message.sender_id == sender_id,
-    'message-received': message.sender_id != sender_id,
-  }">
+          'message-sent': message.sender_id == sender_id,
+          'message-received': message.sender_id != sender_id,
+        }">
           <span class="message-content">{{ message.message }}</span>
         </div>
       </template>
@@ -23,7 +26,7 @@
         </button>
       </div>
       <div class="footer-middle">
-        <textarea v-model="newMessage" placeholder="输入消息..." />
+        <textarea v-model="newMessage" placeholder="输入消息..." @keydown.prevent.enter="sendMessage('message')" />
 
       </div>
       <div class="footer-down">
@@ -37,9 +40,9 @@
 <script setup>
 import { ref, watch, onMounted, nextTick } from "vue";
 import EmojiPicker from './EmojiPicker.vue';
+import { useDraggable } from '../util.js';
 
 const props = defineProps({
-  show: Boolean,
   currentFriend: Object,
   messages: Array,
   sender_id: Number,
@@ -52,6 +55,10 @@ const newMessage = ref("");
 const chatBody = ref(null);
 const showEmojiPicker = ref(false);
 const emojiButton = ref(null);
+const chatHeader = ref(null);
+const chatDialog = ref(null);
+
+useDraggable(chatDialog, chatHeader);
 
 onMounted(() => {
   // 初始化时滚动到底部
@@ -129,6 +136,9 @@ const closeChat = () => {
 };
 
 const sendMessage = (type = "text") => {
+  if (!newMessage.value.trim()) {
+    return;
+  }
   emit("update:messages", { message: newMessage.value.trim(), type, sender_id: props.sender_id, receiver_id: props.receiver_id });
   newMessage.value = "";
 };
@@ -165,6 +175,19 @@ defineExpose({
     background: linear-gradient(to right, #8e2de2, #4a00e0);
     color: white;
     font-size: 18px;
+
+    .left {
+      display: flex;
+      align-items: center;
+      cursor: default;
+    }
+
+    .friend-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
 
     button {
       background: none;
