@@ -1,5 +1,7 @@
 import { onMounted, onBeforeUnmount } from 'vue';
 
+let highestZIndex = 1;
+
 export function useDraggable(parentRef, sonRef) {
   let isDragging = false;
   let startX = 0;
@@ -14,6 +16,8 @@ export function useDraggable(parentRef, sonRef) {
     startY = e.clientY;
     initialLeft = parentRef.value.offsetLeft;
     initialTop = parentRef.value.offsetTop;
+    highestZIndex += 1;
+    parentRef.value.style.zIndex = highestZIndex;
     document.addEventListener('mousemove', onDrag);
     document.addEventListener('mouseup', stopDrag);
   };

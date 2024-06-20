@@ -9,8 +9,10 @@
           <div class="user-image-wrapper">
             <img v-if="avatarUrl" :src="avatarUrl" class="user-image" />
           </div>
-          <input id="fileInput" type="file" @change="onFileChange" class="file-input"/>
-          <button type="button" class="upload-button" @click="triggerFileInput">上传头像</button>
+          <input id="fileInput" type="file" @change="onFileChange" class="file-input" />
+          <label for="fileInput" class="upload-button">
+            上传头像
+          </label>
         </div>
 
         <div class="form-group">
@@ -23,12 +25,7 @@
 
         <div class="form-group">
           <label for="password" class="hidden-label">Password:</label>
-          <input
-            type="password"
-            v-model="password"
-            placeholder="密码"
-            required
-          />
+          <input type="password" v-model="password" placeholder="密码" required />
           <span class="validation-message" v-if="!passwordValid">
             {{ passwordMessage }}
           </span>
@@ -38,12 +35,7 @@
           <label for="email" class="hidden-label">Email:</label>
           <div class="input-with-button">
             <input type="email" v-model="email" placeholder="邮箱" required />
-            <button
-              type="button"
-              @click="sendVerificationCode"
-              class="send-code-button"
-              :disabled="isSendingCode"
-            >
+            <button type="button" @click="sendVerificationCode" class="send-code-button" :disabled="isSendingCode">
               {{ buttonText }}
             </button>
           </div>
@@ -53,15 +45,8 @@
         </div>
 
         <div class="form-group">
-          <label for="verificationCode" class="hidden-label"
-            >Verification Code:</label
-          >
-          <input
-            type="text"
-            v-model="verificationCode"
-            placeholder="验证码"
-            required
-          />
+          <label for="verificationCode" class="hidden-label">Verification Code:</label>
+          <input type="text" v-model="verificationCode" placeholder="验证码" required />
         </div>
 
         <button type="submit" class="register-button">注册</button>
@@ -153,21 +138,21 @@ const register = () => {
       verificationCode: verificationCode.value,
       avatarUrl: avatarUrlToSend,
     })
-    .then((response) => {
-      alert(`注册成功,请记住您的id:${response.data.userId}并返回登录`);
-      router.push({ name: "login" });
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-      alert("注册失败: " + (error.response?.data?.message || "发生错误"));
-    });
+      .then((response) => {
+        alert(`注册成功,请记住您的id:${response.data.userId}并返回登录`);
+        router.push({ name: "login" });
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        alert("注册失败: " + (error.response?.data?.message || "发生错误"));
+      });
   };
 
   if (avatarFile.value) {
     const file = avatarFile.value;
     const reader = new FileReader();
 
-    reader.onload = function(event) {
+    reader.onload = function (event) {
       const arrayBuffer = event.target.result;
       const blobData = new Blob([new Uint8Array(arrayBuffer)], { type: file.type });
 
@@ -176,14 +161,14 @@ const register = () => {
           'Content-Type': file.type, // 使用文件的 MIME 类型
         },
       })
-      .then(response => {
-        const avatarUrlToSend = 'http://127.0.0.1:9000/image/' + file.name;
-        handleRegistration(avatarUrlToSend);
-      })
-      .catch(error => {
-        console.error('Error uploading file:', error);
-        alert('头像上传失败，请重试');
-      });
+        .then(response => {
+          const avatarUrlToSend = 'http://127.0.0.1:9000/image/' + file.name;
+          handleRegistration(avatarUrlToSend);
+        })
+        .catch(error => {
+          console.error('Error uploading file:', error);
+          alert('头像上传失败，请重试');
+        });
     };
 
     reader.readAsArrayBuffer(file);
@@ -328,6 +313,7 @@ const navigateToHome = () => {
       border-radius: 5px;
       color: #fff;
       cursor: pointer;
+      display: block;
     }
 
     .register-button {
@@ -352,12 +338,13 @@ const navigateToHome = () => {
   0% {
     background-position: 0% 0%;
   }
+
   50% {
     background-position: 100% 100%;
   }
+
   100% {
     background-position: 0% 0%;
   }
 }
-
 </style>

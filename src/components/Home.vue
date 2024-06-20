@@ -3,7 +3,7 @@
     <aside class="sidebar" ref="sidebar">
       <div class="user-info">
         <img :src="avatarUrl" alt="Avatar" class="avatar" @dblclick="showAvatarDialog" />
-        <AvatarDialog :avatarUrl="avatarUrl" v-if="dialogVisible" @close="closeAvatarDialog"
+        <AvatarDialog :avatarUrl="avatarUrl" :userId="userId" v-if="dialogVisible" @close="closeAvatarDialog"
           @changeAvatar="handleChangeAvatar" />
         <h1 v-if="!editing" @dblclick="edit">{{ username }}</h1>
         <input class="edit-input" v-else v-model="username" @blur="save" @keyup.enter="save" ref="editInput" />
@@ -113,7 +113,7 @@ const sidebar = ref(null);
 const requestId = ref(null);
 
 const ws = new WebSocket("ws://localhost:3000");
-useDraggable(sidebar,sidebar);
+useDraggable(sidebar, sidebar);
 
 onMounted(() => {
   showSection(currentSection.value);
@@ -134,12 +134,11 @@ onMounted(() => {
     const data = JSON.parse(event.data);
     messages.value.push(data);
     if (data.type === "shake") {
-      if (chatDialog.value) {
-        startChatWithFriend(data.sender_id)
-        nextTick(() => {
-          chatDialog.value.shakeFriendWindow();
-        });
-      }
+      showChat.value = true;
+      startChatWithFriend(data.sender_id)
+      nextTick(() => {
+        chatDialog.value.shakeFriendWindow();
+      });
     }
   };
 });
@@ -164,9 +163,8 @@ const showSection = (section) => {
   });
 };
 
-const handleChangeAvatar = () => {
-  // 在这里添加更换头像的逻辑，例如打开文件选择器或跳转到更换头像页面
-  console.log('Change Avatar button clicked');
+const handleChangeAvatar = (newAvatarUrl) => {
+  avatarUrl.value = newAvatarUrl;
 };
 
 const openContextMenu = (event, friend) => {
@@ -226,7 +224,6 @@ const selectFriend = (friendId) => {
   currentFriend.value = friends.value.find(
     (friend) => friend.id == selectedFriend.value
   );
-  console.log(currentFriend.value);
   fetchConversations(userId, selectedFriend.value);
 };
 

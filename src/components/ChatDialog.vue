@@ -34,6 +34,12 @@
         <button @click="closeChat" class="close-button">关闭</button>
       </div>
     </div>
+
+    <div v-if="showNotification" class="notification" ref="notification">
+      您发送窗口抖动过于频繁，请稍后再发。
+      <button @click="closeNotification">关闭</button>
+    </div>
+    <audio ref="shakeSound" :src="shakeSoundSrc"></audio>
   </div>
 </template>
 
@@ -41,6 +47,7 @@
 import { ref, watch, onMounted, nextTick } from "vue";
 import EmojiPicker from './EmojiPicker.vue';
 import { useDraggable } from '../util.js';
+import shakeSoundFile from '@/assets/shake.mp3';
 
 const props = defineProps({
   currentFriend: Object,
@@ -57,6 +64,12 @@ const showEmojiPicker = ref(false);
 const emojiButton = ref(null);
 const chatHeader = ref(null);
 const chatDialog = ref(null);
+const shakeSound = ref(null);
+const shakeSoundSrc = shakeSoundFile;
+let lastShakeTime = 0;
+const showNotification = ref(false);
+let notificationTimeout = null;
+const notification = ref(null);
 
 useDraggable(chatDialog, chatHeader);
 
@@ -79,7 +92,7 @@ watch(
 );
 
 const shakeWindow = () => {
-  const duration = 100; // 抖动持续时间
+  const duration = 300; // 抖动持续时间
   const intensity = 10; // 抖动强度
   const windowElement = document.querySelector('.chat-dialog'); // 替换为窗口的实际类名
 
@@ -100,16 +113,52 @@ const shakeWindow = () => {
       }
     };
     shake();
+    shakeSound.value.currentTime = 0.17;
+    shakeSound.value.play();
   }
 };
 
 const shakeMyWindow = () => {
-  shakeWindow();
-  sendMessage("shake");
+  const now = Date.now();
+  if (now - lastShakeTime >= 5000) { // 检查是否距离上次调用超过5秒
+    shakeWindow();
+    sendMessage("shake");
+    lastShakeTime = now; // 更新上次调用的时间
+    showNotification.value = false;
+  } else {
+    showNotificationWithAnimation();
+  }
 };
 
 const shakeFriendWindow = () => {
   shakeWindow();
+};
+
+const showNotificationWithAnimation = () => {
+  if (showNotification.value) {
+    notification.value.style.transition = 'none';
+    notification.value.style.opacity = '0';
+    nextTick(() => {
+      notification.value.offsetHeight;
+      notification.value.style.transition = 'opacity 0.5s ease-in-out';
+      notification.value.style.opacity = '1';
+    })
+  } else {
+    showNotification.value = true;
+  }
+
+  clearTimeout(notificationTimeout);
+  notificationTimeout = setTimeout(() => {
+    if (notification.value) {
+      notification.value.style.transition = 'opacity 0.5s ease-in-out';
+      notification.value.style.opacity = '0';
+    }
+  }, 5000); // 提示面板显示5秒后自动消失
+};
+
+const closeNotification = () => {
+  showNotification.value = false;
+  clearTimeout(notificationTimeout);
 };
 
 const toggleEmojiPicker = () => {
@@ -136,7 +185,7 @@ const closeChat = () => {
 };
 
 const sendMessage = (type = "text") => {
-  if (!newMessage.value.trim()) {
+  if (!newMessage.value.trim() && type === "text") {
     return;
   }
   emit("update:messages", { message: newMessage.value.trim(), type, sender_id: props.sender_id, receiver_id: props.receiver_id });
@@ -333,6 +382,36 @@ defineExpose({
         &:hover {
           background-color: #c0392b;
         }
+      }
+    }
+  }
+
+  .notification {
+    position: absolute;
+    top: 50px;
+    width: 500px;
+    background-color: #5f68eb;
+    color: white;
+    padding: 1px;
+    border: 1px solid #4a00e0;
+    border-radius: 5px;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+
+    &.visible {
+      opacity: 1;
+    }
+
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: white;
+
+      &:hover {
+        color: #ddd;
       }
     }
   }

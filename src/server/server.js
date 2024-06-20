@@ -38,6 +38,7 @@ const wss = new WebSocket.Server({ server });
 
 const clients = new Map();
 
+// 管理用户实时对话
 wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         const data = JSON.parse(message);
@@ -86,6 +87,21 @@ wss.on('connection', (ws) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// 更新头像 URL 的 API
+app.post('/update-avatar', (req, res) => {
+    const { userId, avatarUrl } = req.body;
+    console.log(userId, avatarUrl);
+    const query = 'UPDATE users SET avatar_url = ? WHERE user_id = ?';
+    
+    connection.query(query, [avatarUrl, userId], (err, result) => {
+      if (err) {
+        console.error('Error updating avatar URL:', err);
+        return res.status(500).send('Database update failed');
+      }
+      res.send('Avatar URL updated successfully');
+    });
+  });
 
 // 更新用户名的路由
 app.put('/update-username', (req, res) => {
