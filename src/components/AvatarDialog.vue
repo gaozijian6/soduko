@@ -54,7 +54,7 @@ const onFileChange = (event) => {
             console.error('Error updating avatar URL in DB:', dbError);
             alert('头像地址更新失败，请重试');
           });
-        
+
       })
       .catch(error => {
         console.error('Error uploading file:', error);
@@ -81,8 +81,8 @@ const onFileChange = (event) => {
   z-index: 1000;
 
   .avatar-large {
-    max-width: 90%;
-    max-height: 90%;
+    width: 400px;
+    height: 400px;
     margin-bottom: 20px;
   }
 

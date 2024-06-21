@@ -5,6 +5,7 @@ const mysql = require('mysql2');
 const WebSocket = require('ws');
 const http = require('http');
 const sendVerificationCode = require('./mailer');
+const { type } = require('os');
 
 const app = express();
 const PORT = 3000;
@@ -88,6 +89,23 @@ server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
+// 获取用户信息的路由
+app.get('/user/:userId', (req, res) => {
+    const { userId } = req.params;
+    connection.query('SELECT * FROM users WHERE user_id = ?', [userId], (err, results) => {
+        if (err) {
+            console.error('Error querying MySQL:', err);
+            return res.status(500).json({ message: 'Internal server error' });
+        }
+        if (results.length > 0) {
+            const user = results[0];
+            res.json(user);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    });
+});
+
 // 更新头像 URL 的 API
 app.post('/update-avatar', (req, res) => {
     const { userId, avatarUrl } = req.body;
@@ -135,6 +153,7 @@ app.put('/update-username', (req, res) => {
 app.delete('/friends/:friendId', (req, res) => {
     const { friendId } = req.params;
     const { userId } = req.body;
+    console.log(friendId, userId);
 
     // 获取对应的 user_id 和 friend_id
     connection.query('SELECT user_id, friend_id FROM friends WHERE user_id = ? AND friend_id = ? OR user_id = ? AND friend_id = ?', 

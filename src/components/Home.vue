@@ -18,10 +18,10 @@
       <div v-if="currentSection === 'friends'" class="friends-section">
         <h2>你的好友</h2>
         <div class="friends-list">
-          <div v-for="friend in friends" :key="friend.id" :class="{
+          <div v-for="friend in friends" :key="friend.user_id" :class="{
           'friend-item': true,
-          selected: friend.id === selectedFriend,
-        }" @click="selectFriend(friend.id)" @dblclick="startChatWithFriend(friend.id)"
+          selected: friend.user_id === selectedFriendId,
+        }" @click="selectFriend(friend.user_id)" @dblclick="startChatWithFriend(friend.user_id)"
             @contextmenu.prevent="openContextMenu($event, friend)">
             <img :src="friend.avatar_url" alt="avatar" class="friend-avatar" />
             {{ friend.username }}
@@ -29,8 +29,8 @@
         </div>
         <div v-if="contextMenuVisible" :style="{ top: `${contextMenuY}px`, left: `${contextMenuX}px` }"
           class="context-menu">
-          <button @click="confirmDeleteFriend(selectedFriend)">删除好友</button>
-          <button @click="startChatWithFriend(selectedFriend)">开始对话</button>
+          <button @click="showDeleteDialog(selectedFriendId)">删除好友</button>
+          <button @click="startChatWithFriend(selectedFriendId)">开始对话</button>
         </div>
       </div>
 
@@ -67,10 +67,19 @@
         </div>
       </div>
 
+      <div v-if="isShowDeleteDialog" class="dialog-overlay">
+        <div class="dialog">
+          <button class="close-button" @click="isShowDeleteDialog = false">×</button>
+          <p>你确定要删除好友吗？</p>
+          <button @click="confirmDelete">确定</button>
+          <button @click="isShowDeleteDialog = false">取消</button>
+        </div>
+      </div>
+
       <button @click="logout" class="logout-button">登出</button>
     </aside>
     <ChatDialog v-if="showChat" :currentFriend="currentFriend" @close="closeChat" :messages="messages"
-      @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriend" ref="chatDialog" />
+      @update:messages="updateMessages" :sender_id="userId" :receiver_id="selectedFriendId" ref="chatDialog" />
   </div>
 </template>
 
@@ -94,7 +103,7 @@ const newFriendRequest = ref([]);
 const friendId = ref("");
 const friendResult = ref({});
 const friends = ref([]);
-const selectedFriend = ref(null);
+const selectedFriendId = ref(null);
 const showChat = ref(false);
 const currentFriend = ref(null);
 const showDialog = ref(false);
@@ -111,11 +120,14 @@ const sliderStyle = ref({ left: '0%', width: '0%' });
 const newFriend2 = ref('');
 const sidebar = ref(null);
 const requestId = ref(null);
+const isShowDeleteDialog = ref(false);
+const deletedFriend = ref(null);
 
 const ws = new WebSocket("ws://localhost:3000");
 useDraggable(sidebar, sidebar);
 
 onMounted(() => {
+  getUserInfo();
   showSection(currentSection.value);
   const queryAvatarUrl = route.query.avatarUrl;
   if (queryAvatarUrl) {
@@ -134,8 +146,8 @@ onMounted(() => {
     const data = JSON.parse(event.data);
     messages.value.push(data);
     if (data.type === "shake") {
-      showChat.value = true;
       startChatWithFriend(data.sender_id)
+      console.log(currentFriend.value);
       nextTick(() => {
         chatDialog.value.shakeFriendWindow();
       });
@@ -146,6 +158,17 @@ onMounted(() => {
 onUnmounted(() => {
   ws.close();
 });
+
+// 获取用户信息
+const getUserInfo = () => {
+  apiClient.get(`/user/${userId}`)
+    .then(response => {
+      ({ username: username.value, avatar_url: avatarUrl.value } = response.data);
+    })
+    .catch(error => {
+      console.error('Error fetching user info:', error);
+    });
+};
 
 const showSection = (section) => {
   currentSection.value = section;
@@ -168,7 +191,7 @@ const handleChangeAvatar = (newAvatarUrl) => {
 };
 
 const openContextMenu = (event, friend) => {
-  selectedFriend.value = friend.id;
+  selectedFriendId.value = friend.user_id;
   contextMenuX.value = event.clientX;
   contextMenuY.value = event.clientY;
   contextMenuVisible.value = true;
@@ -181,25 +204,24 @@ const closeContextMenu = () => {
   document.removeEventListener('click', closeContextMenu);
 };
 
-const confirmDeleteFriend = (friendId) => {
-  const confirmed = confirm("确定要删除这个好友吗？");
-  if (confirmed) {
-    deleteFriend(friendId);
-  }
+const showDeleteDialog = (friendId) => {
+  isShowDeleteDialog.value = true;
+  deletedFriend.value = friendId;
 };
 
-const deleteFriend = (friendId) => {
-  apiClient.delete(`/friends/${friendId}`, {
+const confirmDelete = () => {
+  apiClient.delete(`/friends/${deletedFriend.value}`, {
     data: {
       userId,
     },
   })
     .then(response => {
       // 删除成功后更新 friends 列表
-      friends.value = friends.value.filter(friend => friend.id !== friendId);
+      friends.value = friends.value.filter(friend => friend.user_id !== friendId);
       console.log('Friend deleted successfully:', response.data);
       // 关闭右键菜单
       closeContextMenu();
+      isShowDeleteDialog.value = false;
     })
     .catch(error => {
       // 错误处理
@@ -220,11 +242,12 @@ const startChatWithFriend = (friendId) => {
 };
 
 const selectFriend = (friendId) => {
-  selectedFriend.value = friendId;
+  selectedFriendId.value = friendId;
   currentFriend.value = friends.value.find(
-    (friend) => friend.id == selectedFriend.value
+    (friend) => friend.user_id == selectedFriendId.value
   );
-  fetchConversations(userId, selectedFriend.value);
+  console.log(currentFriend.value);
+  fetchConversations(userId, selectedFriendId.value);
 };
 
 const showFriendRequestDialog = (newFriend) => {
@@ -234,10 +257,9 @@ const showFriendRequestDialog = (newFriend) => {
 };
 
 const startChat = () => {
-  console.log(selectedFriend.value);
-  if (selectedFriend.value) {
+  if (selectedFriendId.value) {
     currentFriend.value = friends.value.find(
-      (friend) => friend.id == selectedFriend.value
+      (friend) => friend.user_id == selectedFriendId.value
     );
     showChat.value = true;
   }
@@ -300,7 +322,7 @@ const sendFriendRequest = (receiverId, receiverUsername) => {
 
   // 检查是否已经是好友
   const isAlreadyFriend = friends.value.some(
-    (friend) => friend.id === receiverId
+    (friend) => friend.user_id === receiverId
   );
   if (isAlreadyFriend) {
     alert("User is already your friend.");
@@ -591,10 +613,6 @@ const save = () => {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
 
-      ::selection {
-        background: transparent;
-        /* 取消文本选中高亮背景 */
-      }
     }
 
     .toolbar {
@@ -733,6 +751,7 @@ const save = () => {
       padding: 0 10px;
       flex-grow: 1;
       width: 90%;
+      user-select: none;
 
       .friends-list {
         border: 1px solid #7f8c8d;

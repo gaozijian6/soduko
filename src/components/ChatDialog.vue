@@ -9,7 +9,7 @@
     </div>
     <div class="chat-body" ref="chatBody">
       <template v-for="message in messages" :key="message.id">
-        <div v-if="message.type === 'message'" :class="{
+        <div v-if="message.type === 'text'" :class="{
           'message-sent': message.sender_id == sender_id,
           'message-received': message.sender_id != sender_id,
         }">
@@ -26,7 +26,7 @@
         </button>
       </div>
       <div class="footer-middle">
-        <textarea v-model="newMessage" placeholder="输入消息..." @keydown.prevent.enter="sendMessage('message')" />
+        <textarea v-model="newMessage" placeholder="输入消息..." @keydown.prevent.enter="sendMessage('text')" />
 
       </div>
       <div class="footer-down">
@@ -185,7 +185,7 @@ const closeChat = () => {
 };
 
 const sendMessage = (type = "text") => {
-  if (!newMessage.value.trim() && type === "text") {
+  if (!newMessage.value.trim() && type == "text") {
     return;
   }
   emit("update:messages", { message: newMessage.value.trim(), type, sender_id: props.sender_id, receiver_id: props.receiver_id });

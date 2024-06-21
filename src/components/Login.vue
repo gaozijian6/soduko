@@ -70,7 +70,7 @@ const login = () => {
         alert('Login successful');
         router.push({
           name: 'home',
-          query: { userId: userId.value, username: username.value, avatarUrl: avatarUrl.value },
+          query: { userId: userId.value },
         });
       } else {
         alert('Login failed: ' + (data.message || 'Invalid credentials'));
