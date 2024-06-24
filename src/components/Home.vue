@@ -5,8 +5,13 @@
         <img :src="avatarUrl" alt="Avatar" class="avatar" @dblclick="showAvatarDialog" />
         <AvatarDialog :avatarUrl="avatarUrl" :userId="userId" v-if="dialogVisible" @close="closeAvatarDialog"
           @changeAvatar="handleChangeAvatar" />
-        <h1 v-if="!editing" @dblclick="edit">{{ username }}</h1>
-        <input class="edit-input" v-else v-model="username" @blur="save" @keyup.enter="save" ref="editInput" />
+        <div class="right">
+          <h1 v-if="!editingName" @dblclick="editName">{{ username }}</h1>
+          <input class="edit-name" v-else v-model="username" @blur="saveName" @keyup.enter="saveName" ref="editNameRef" />
+          <h6 v-if="!editingIntro" @click="editIntro">{{ userintro || '编辑个性签名' }}</h6>
+          <input class="edit-intro" v-else v-model="userintro" @blur="saveIntro" @keyup.enter="saveIntro" ref="editIntroRef" />
+        </div>
+
       </div>
       <div class="toolbar">
         <span @click="showSection('friends')" :class="{ active: currentSection === 'friends' }">您的好友</span>
@@ -113,8 +118,8 @@ const contextMenuX = ref(0);
 const contextMenuY = ref(0);
 const chatDialog = ref(null);
 const dialogVisible = ref(false);
-const editing = ref(false);
-const editInput = ref(null);
+const editingName = ref(false);
+const editNameRef = ref(null);
 const currentSection = ref('friends');
 const sliderStyle = ref({ left: '0%', width: '0%' });
 const newFriend2 = ref('');
@@ -122,6 +127,9 @@ const sidebar = ref(null);
 const requestId = ref(null);
 const isShowDeleteDialog = ref(false);
 const deletedFriend = ref(null);
+const userintro = ref('');
+const editingIntro = ref(false);
+const editIntroRef = ref(null);
 
 const ws = new WebSocket("ws://localhost:3000");
 useDraggable(sidebar, sidebar);
@@ -163,7 +171,7 @@ onUnmounted(() => {
 const getUserInfo = () => {
   apiClient.get(`/user/${userId}`)
     .then(response => {
-      ({ username: username.value, avatar_url: avatarUrl.value } = response.data);
+      ({ username: username.value, avatar_url: avatarUrl.value, user_intro: userintro.value } = response.data);
     })
     .catch(error => {
       console.error('Error fetching user info:', error);
@@ -442,16 +450,41 @@ const closeAvatarDialog = () => {
   dialogVisible.value = false;
 };
 
-const edit = () => {
-  editing.value = true;
+const editIntro = () => {
+  editingIntro.value = true;
   nextTick(() => {
-    editInput.value.focus();
+    editIntroRef.value.focus();
   });
 };
 
-const save = () => {
-  editing.value = false;
-  if (!username.value.trim()) {
+const saveIntro = () => {
+  editingIntro.value = false;
+  if (!userintro.value || !userintro.value.trim()) {
+    userintro.value = '';
+  }
+  apiClient.put('/update-intro', { user_id: userId, user_intro: userintro.value })
+    .then(response => {
+      if (response.data.success) {
+        console.log('User intro updated successfully');
+      } else {
+        console.error('Failed to update user intro');
+      }
+    })
+    .catch(error => {
+      console.error('Error updating user intro:', error);
+    });
+};
+
+const editName = () => {
+  editingName.value = true;
+  nextTick(() => {
+    editNameRef.value.focus();
+  });
+};
+
+const saveName = () => {
+  editingName.value = false;
+  if (!username.value || !username.value.trim()) {
     username.value = route.query.username;
     return;
   }
@@ -590,28 +623,58 @@ const save = () => {
         cursor: pointer;
       }
 
-      h1 {
-        font-size: 20px;
-        margin: 0;
-        cursor: pointer;
-        user-select: none;
+      .right{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        width: 100%;
+
+        h1 {
+          font-size: 20px;
+          margin: 0;
+          cursor: pointer;
+          user-select: none;
+        }
+
+        .edit-name {
+          font-size: 1em;
+          padding: 5px;
+          margin: 5px 0;
+          border: 2px solid #ccc;
+          border-radius: 4px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          transition: border-color 0.3s, box-shadow 0.3s;
+          outline: none;
+        }
+
+        .edit-name:focus {
+          border-color: #4A90E2;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        h6 {
+          font-size: 14px;
+          margin: 0;
+          cursor: default;
+          user-select: none;
+          width: 180px;
+          height: 20px;
+          border: 1px solid transparent;
+          font-weight: 300;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          &:hover {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+          }
+        }
+
+
       }
 
-      .edit-input {
-        font-size: 1em;
-        padding: 5px;
-        margin: 5px 0;
-        border: 2px solid #ccc;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: border-color 0.3s, box-shadow 0.3s;
-        outline: none;
-      }
 
-      .edit-input:focus {
-        border-color: #4A90E2;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      }
 
     }
 

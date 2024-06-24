@@ -26,7 +26,7 @@
         </button>
       </div>
       <div class="footer-middle">
-        <textarea v-model="newMessage" placeholder="输入消息..." @keydown.prevent.enter="sendMessage('text')" />
+        <textarea v-model="newMessage" placeholder="输入消息..." @keydown.prevent.enter="sendMessage('text')" ref="textArea" />
 
       </div>
       <div class="footer-down">
@@ -70,6 +70,7 @@ let lastShakeTime = 0;
 const showNotification = ref(false);
 let notificationTimeout = null;
 const notification = ref(null);
+const textArea = ref(null);
 
 useDraggable(chatDialog, chatHeader);
 
@@ -168,6 +169,7 @@ const toggleEmojiPicker = () => {
 const addEmoji = (emoji) => {
   newMessage.value += emoji;
   showEmojiPicker.value = false;
+  textArea.value.focus();
 };
 
 const closeEmojiPicker = () => {

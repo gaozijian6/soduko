@@ -5,7 +5,6 @@ const mysql = require('mysql2');
 const WebSocket = require('ws');
 const http = require('http');
 const sendVerificationCode = require('./mailer');
-const { type } = require('os');
 
 const app = express();
 const PORT = 3000;
@@ -119,6 +118,29 @@ app.post('/update-avatar', (req, res) => {
       }
       res.send('Avatar URL updated successfully');
     });
+  });
+
+// 更新update-intro的路由
+app.put('/update-intro', (req, res) => {
+    const { user_id, user_intro } = req.body;
+  
+    // 更新intro
+    connection.query(
+      'UPDATE users SET user_intro = ? WHERE user_id = ?',
+      [user_intro, user_id],
+      (err, results) => {
+        if (err) {
+          console.error('Error updating user_intro:', err);
+          return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+  
+        if (results.affectedRows === 0) {
+          return res.status(404).json({ success: false, message: 'User not found' });
+        }
+  
+        res.json({ success: true, message: 'Intro updated successfully' });
+      }
+    );
   });
 
 // 更新用户名的路由
