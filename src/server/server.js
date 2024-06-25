@@ -592,6 +592,10 @@ app.get('/friends', (req, res) => {
             console.error('Error querying MySQL:', err);
             return res.status(500).json({ message: 'Internal server error' });
         }
+        // 去掉results中的密码字段
+        results.forEach(friend => {
+            delete friend.password;
+        });
         res.json({ friends: results });
     });
 });

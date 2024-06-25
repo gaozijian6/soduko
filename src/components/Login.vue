@@ -25,6 +25,7 @@
         </button>
       </form>
     </div>
+    <LoginPrompt :show="isShowPrompt" :isSuccess="isSuccess" />
   </div>
 </template>
 
@@ -33,6 +34,7 @@ import axios from "axios";
 import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import apiClient from '@/aplClient'
+import LoginPrompt from './LoginPrompt.vue'
 
 const username = ref("");
 const userId = ref("");
@@ -41,6 +43,8 @@ const defaultAvatarUrl = ref("http://127.0.0.1:9000/image/qq.png")
 const avatarUrl = ref("http://127.0.0.1:9000/image/qq.png");
 const rememberPassword = ref(false);
 const userIp = ref("");
+const isShowPrompt = ref(false);
+const isSuccess = ref(false);
 const router = useRouter();
 
 // 获取用户IP地址
@@ -67,22 +71,28 @@ const login = () => {
       if (data.token) {
         username.value = data.username;
         localStorage.setItem(`${userId.value}-token`, data.token);
-        alert('Login successful');
-        router.push({
-          name: 'home',
-          query: { userId: userId.value, username: username.value},
-        });
+        showPrompt(true);
       } else {
-        alert('Login failed: ' + (data.message || 'Invalid credentials'));
+        showPrompt(false);
       }
     })
     .catch((error) => {
-      console.error('Error:', error);
-      alert(
-        'Login failed: ' +
-        (error.response.data.message || 'Invalid credentials')
-      );
+      showPrompt(false); 
     });
+};
+
+const showPrompt = (isSuccess1) => {
+  isShowPrompt.value = true;
+  isSuccess.value = isSuccess1;
+  setTimeout(() => {
+    isShowPrompt.value = false;
+    if(isSuccess1) {
+      router.push({
+        name: 'home',
+        query: { userId: userId.value, username: username.value },
+      });
+    }
+  }, 1000);
 };
 
 const navigateToRegister = () => {

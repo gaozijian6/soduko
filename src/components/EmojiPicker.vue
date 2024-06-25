@@ -16,10 +16,6 @@
 import { defineProps, defineEmits, ref, onMounted, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false,
-  },
   emojiButton: {
     type: Object,
     required: true,

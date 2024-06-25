@@ -7,9 +7,11 @@
           @changeAvatar="handleChangeAvatar" />
         <div class="right">
           <h1 v-if="!editingName" @dblclick="editName">{{ username }}</h1>
-          <input class="edit-name" v-else v-model="username" @blur="saveName" @keyup.enter="saveName" ref="editNameRef" />
+          <input class="edit-name" v-else v-model="username" @blur="saveName" @keyup.enter="saveName"
+            ref="editNameRef" />
           <h6 v-if="!editingIntro" @click="editIntro">{{ userintro || '编辑个性签名' }}</h6>
-          <input class="edit-intro" v-else v-model="userintro" @blur="saveIntro" @keyup.enter="saveIntro" ref="editIntroRef" />
+          <input class="edit-intro" v-else v-model="userintro" @blur="saveIntro" @keyup.enter="saveIntro"
+            ref="editIntroRef" />
         </div>
 
       </div>
@@ -29,7 +31,8 @@
         }" @click="selectFriend(friend.user_id)" @dblclick="startChatWithFriend(friend.user_id)"
             @contextmenu.prevent="openContextMenu($event, friend)">
             <img :src="friend.avatar_url" alt="avatar" class="friend-avatar" />
-            {{ friend.username }}
+            <div class="friend-name">{{ friend.username }}</div>
+            <div class="friend-intro">{{ friend.user_intro }}</div>
           </div>
         </div>
         <div v-if="contextMenuVisible" :style="{ top: `${contextMenuY}px`, left: `${contextMenuX}px` }"
@@ -623,7 +626,7 @@ const saveName = () => {
         cursor: pointer;
       }
 
-      .right{
+      .right {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -635,6 +638,10 @@ const saveName = () => {
           margin: 0;
           cursor: pointer;
           user-select: none;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          max-width: 210px;
         }
 
         .edit-name {
@@ -665,6 +672,7 @@ const saveName = () => {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+
           &:hover {
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -826,10 +834,11 @@ const saveName = () => {
         .friend-item {
           display: flex;
           align-items: center;
-          padding: 10px;
+          padding: 0 10px;
           border-bottom: 1px solid #7f8c8d;
           cursor: pointer;
           transition: background-color 0.3s;
+          height: 60px;
 
           &:hover {
             background-color: #2c3e50;
@@ -845,6 +854,28 @@ const saveName = () => {
             height: 30px;
             border-radius: 50%;
             margin-right: 10px;
+          }
+
+          .friend-name {
+            font-size: 16px;
+            color: #ecf0f1;
+            margin-left: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100px;
+            min-width: 0;
+            display: inline-block;
+          }
+
+          .friend-intro {
+            font-size: 14px;
+            color: #bdc3c7;
+            margin-left: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
           }
         }
       }
