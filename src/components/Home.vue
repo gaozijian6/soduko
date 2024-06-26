@@ -16,14 +16,13 @@
 
       </div>
       <div class="toolbar">
-        <span @click="showSection('friends')" :class="{ active: currentSection === 'friends' }">您的好友</span>
+        <span @click="showSection('friends')" :class="{ active: currentSection === 'friends' }">我的好友</span>
         <span @click="showSection('search')" :class="{ active: currentSection === 'search' }">添加好友</span>
         <span @click="showSection('requests')" :class="{ active: currentSection === 'requests' }">新的申请</span>
         <div class="slider" :style="sliderStyle"></div>
       </div>
 
       <div v-if="currentSection === 'friends'" class="friends-section">
-        <h2>你的好友</h2>
         <div class="friends-list">
           <div v-for="friend in friends" :key="friend.user_id" :class="{
           'friend-item': true,
@@ -31,8 +30,10 @@
         }" @click="selectFriend(friend.user_id)" @dblclick="startChatWithFriend(friend.user_id)"
             @contextmenu.prevent="openContextMenu($event, friend)">
             <img :src="friend.avatar_url" alt="avatar" class="friend-avatar" />
-            <div class="friend-name">{{ friend.username }}</div>
-            <div class="friend-intro">{{ friend.user_intro }}</div>
+            <div class="right">
+              <div class="friend-name">{{ friend.username }}</div>
+              <div class="friend-intro">{{ friend.user_intro }}</div>
+            </div>
           </div>
         </div>
         <div v-if="contextMenuVisible" :style="{ top: `${contextMenuY}px`, left: `${contextMenuX}px` }"
@@ -830,6 +831,7 @@ const saveName = () => {
         overflow-y: auto;
         flex-grow: 1;
         background-color: #34495e;
+        margin-top: 10px;
 
         .friend-item {
           display: flex;
@@ -856,27 +858,35 @@ const saveName = () => {
             margin-right: 10px;
           }
 
-          .friend-name {
-            font-size: 16px;
-            color: #ecf0f1;
-            margin-left: 5px;
-            white-space: nowrap;
+          .right {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            width: 210px;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 100px;
-            min-width: 0;
-            display: inline-block;
+            .friend-name {
+              font-size: 16px;
+              color: #ecf0f1;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              display: inline-block;
+              width: 100%;
+            }
+
+            .friend-intro {
+              font-size: 14px;
+              color: #bdc3c7;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              width: 100%;
+            }
           }
 
-          .friend-intro {
-            font-size: 14px;
-            color: #bdc3c7;
-            margin-left: 10px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex-grow: 1;
-          }
+
         }
       }
 
