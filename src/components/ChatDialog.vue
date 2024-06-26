@@ -26,7 +26,8 @@
         </button>
       </div>
       <div class="footer-middle">
-        <textarea v-model="newMessage" placeholder="输入消息..." @keydown.prevent.enter="sendMessage('text')" ref="textArea" />
+        <textarea v-model="newMessage" placeholder="输入消息..." @keydown.prevent.enter="sendMessage('text')"
+          ref="textArea" />
 
       </div>
       <div class="footer-down">
@@ -231,6 +232,12 @@ defineExpose({
       display: flex;
       align-items: center;
       cursor: default;
+      span{
+        width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
 
     .friend-avatar {
@@ -271,6 +278,7 @@ defineExpose({
         word-wrap: break-word;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         width: fit-content;
+        position: relative;
       }
     }
 
@@ -280,6 +288,18 @@ defineExpose({
       .message-content {
         background-color: #dcf8c6;
         color: #333;
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: 10px;
+          right: -10px; // 调整尖尖的水平位置
+          width: 10px;
+          height: 20px;
+          background-color: #dcf8c6;
+          clip-path: polygon(0 0, 100% 50%, 0 100%);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
       }
     }
 
@@ -290,6 +310,18 @@ defineExpose({
         background-color: #ffffff;
         border: 1px solid #ddd;
         color: #333;
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 10px;
+          left: -10px; // 调整尖尖的水平位置
+          width: 10px;
+          height: 20px;
+          background-color: #ffffff;
+          clip-path: polygon(100% 0, 0 50%, 100% 100%);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
       }
     }
   }

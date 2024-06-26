@@ -466,6 +466,11 @@ const saveIntro = () => {
   if (!userintro.value || !userintro.value.trim()) {
     userintro.value = '';
   }
+  if (userintro.value.length > 20) {
+    alert('个性签名不能超过20个字符');
+    userintro.value = userintro.value.slice(0, 20);
+    return;
+  }
   apiClient.put('/update-intro', { user_id: userId, user_intro: userintro.value })
     .then(response => {
       if (response.data.success) {
@@ -489,6 +494,11 @@ const editName = () => {
 const saveName = () => {
   editingName.value = false;
   if (!username.value || !username.value.trim()) {
+    username.value = route.query.username;
+    return;
+  }
+  if (username.value.length > 10) {
+    alert('Username cannot exceed 10 characters');
     username.value = route.query.username;
     return;
   }
