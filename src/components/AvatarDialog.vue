@@ -6,7 +6,7 @@
       上传头像
       <input id="fileInput" type="file" @change="onFileChange" class="file-input" />
     </label>
-  </div>qingb
+  </div>
 </template>
 
 <script setup>

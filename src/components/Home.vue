@@ -15,6 +15,12 @@
         </div>
 
       </div>
+      <div class="search">
+        <img class="search-icon" src="../assets/search.png" alt="">
+        <input type="text" @focus="openSearchList" @blur="closeSearchList">
+        <img class="close-icon" src="../assets/close.png" alt="" @click="closeSearchList">
+        <SearchList v-if="isSearchList" />
+      </div>
       <div class="toolbar">
         <span @click="showSection('friends')" :class="{ active: currentSection === 'friends' }">我的好友</span>
         <span @click="showSection('search')" :class="{ active: currentSection === 'search' }">添加好友</span>
@@ -98,6 +104,7 @@ import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ChatDialog from "./ChatDialog.vue";
 import AvatarDialog from './AvatarDialog.vue';
+import SearchList from './SearchList.vue';
 import apiClient from "@/aplClient";
 import { useDraggable } from '../util.js';
 
@@ -134,6 +141,7 @@ const deletedFriend = ref(null);
 const userintro = ref('');
 const editingIntro = ref(false);
 const editIntroRef = ref(null);
+const isSearchList = ref(false);
 
 const ws = new WebSocket("ws://localhost:3000");
 useDraggable(sidebar, sidebar);
@@ -515,6 +523,13 @@ const saveName = () => {
     });
 };
 
+const openSearchList = () => {
+  isSearchList.value = true;
+};
+
+const closeSearchList = () => {
+  isSearchList.value = false;
+};
 </script>
 
 <style scoped lang="less">
@@ -619,13 +634,13 @@ const saveName = () => {
     }
 
     .user-info {
-      width: calc(100% - 40px);
+      width: 100%;
       height: 60px;
       padding: 0 10px;
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       cursor: default;
       padding: 0 20px;
 
@@ -676,7 +691,7 @@ const saveName = () => {
           margin: 0;
           cursor: default;
           user-select: none;
-          width: 180px;
+          width: 200px;
           height: 20px;
           border: 1px solid transparent;
           font-weight: 300;
@@ -689,21 +704,57 @@ const saveName = () => {
             border-radius: 4px;
           }
         }
+      }
+    }
 
+    .search {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 35px;
+      padding: 0 10px;
+      background-color: rgba(0, 0, 0, 0.1);
 
+      img {
+        width: 20px;
+        height: 20px;
+        cursor: default;
       }
 
+      .search-icon {
+        margin-right: 5px;
+      }
 
+      input {
+        flex: 1;
+        background-color: transparent;
+        border: none;
+        font-size: 20px;
+        line-height: 35px;
+      }
 
+      input:focus {
+        outline: none;
+        border: none;
+      }
+
+      .close-icon {
+        opacity: 0.7;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
     }
 
     .toolbar {
       width: 100%;
       height: 40px;
       display: flex;
-      background-color: #2c3e50; // 增加背景颜色
-      border-radius: 5px; // 增加圆角
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // 增加阴影效果
+      background-color: #2c3e50;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       position: relative;
 
       span {
@@ -715,10 +766,10 @@ const saveName = () => {
         position: relative;
         font-size: 16px;
         color: #ffffff;
-        transition: color 0.3s; // 增加颜色过渡效果
+        transition: color 0.3s;
 
         &:hover {
-          color: #1e90ff; // 增加悬停效果
+          color: #1e90ff;
         }
       }
 
@@ -830,13 +881,12 @@ const saveName = () => {
     }
 
     .friends-section {
-      padding: 0 10px;
       flex-grow: 1;
       width: 90%;
       user-select: none;
+      width: 100%;
 
       .friends-list {
-        border: 1px solid #7f8c8d;
         border-radius: 5px;
         overflow-y: auto;
         flex-grow: 1;
@@ -846,8 +896,7 @@ const saveName = () => {
         .friend-item {
           display: flex;
           align-items: center;
-          padding: 0 10px;
-          border-bottom: 1px solid #7f8c8d;
+          padding: 0 15px;
           cursor: pointer;
           transition: background-color 0.3s;
           height: 60px;
@@ -876,6 +925,7 @@ const saveName = () => {
             width: 210px;
             overflow: hidden;
             text-overflow: ellipsis;
+
             .friend-name {
               font-size: 16px;
               color: #ecf0f1;
