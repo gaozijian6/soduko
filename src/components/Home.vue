@@ -17,9 +17,10 @@
       </div>
       <div class="search">
         <img class="search-icon" src="../assets/search.png" alt="">
-        <input type="text" @focus="openSearchList" @blur="closeSearchList" @input="filterFriedns" v-model="filterVal" >
+        <input type="text" @focus="openSearchList" @blur="closeSearchList" @input="filterFriedns" v-model="filterVal">
         <img class="close-icon" src="../assets/close.png" alt="" @click="closeSearchList">
-        <SearchList v-if="isSearchList" :filterFriednsArr="filterFriednsArr" :filterVal="filterVal" />
+        <SearchList v-if="isSearchList" :filterFriednsArr="filterFriednsArr" :filterVal="filterVal"
+          @mouseenter="openisInSearchList" @mouseleave="closeisInSearchList" :startChatWithFriend="startChatWithFriend" />
       </div>
       <div class="toolbar">
         <span @click="showSection('friends')" :class="{ active: currentSection === 'friends' }">我的好友</span>
@@ -144,6 +145,7 @@ const editIntroRef = ref(null);
 const isSearchList = ref(false);
 const filterVal = ref('');
 const filterFriednsArr = ref([]);
+const isInSearchList = ref(false);
 
 const ws = new WebSocket("ws://localhost:3000");
 useDraggable(sidebar, sidebar);
@@ -259,6 +261,8 @@ const updateMessages = (newMessage) => {
 };
 
 const startChatWithFriend = (friendId) => {
+  isInSearchList.value = false;
+  closeSearchList();
   selectFriend(friendId);
   startChat();
 };
@@ -268,7 +272,6 @@ const selectFriend = (friendId) => {
   currentFriend.value = friends.value.find(
     (friend) => friend.user_id == selectedFriendId.value
   );
-  console.log(currentFriend.value);
   fetchConversations(userId, selectedFriendId.value);
 };
 
@@ -530,14 +533,26 @@ const openSearchList = () => {
 };
 
 const closeSearchList = () => {
+  if (isInSearchList.value) {
+    return;
+  }
   isSearchList.value = false;
   filterVal.value = '';
+  filterFriednsArr.value = [];
 };
 
 const filterFriedns = (event) => {
   filterFriednsArr.value = friends.value.filter(friend => {
     return friend.user_id.toString().includes(filterVal.value) || friend.username.includes(filterVal.value);
   });
+};
+
+const openisInSearchList = () => {
+  isInSearchList.value = true;
+};
+
+const closeisInSearchList = () => {
+  isInSearchList.value = false;
 };
 </script>
 

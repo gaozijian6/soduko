@@ -1,6 +1,6 @@
 <template>
     <div class="SearchList">
-        <div class="friendItem" v-for="item in filterFriednsArr" :key="item.user_id">
+        <div class="friendItem" v-for="item in filterFriednsArr" :key="item.user_id" @dblclick="startChatWithFriend(item.user_id)">
             <img :src="item.avatar_url" alt="头像">
             <div class="username" v-html="highlightText(item.username)"></div>
             <div class="user_id" v-html="highlightText(item.user_id.toString()) "></div>
@@ -12,7 +12,8 @@
 
 const props = defineProps({
     filterFriednsArr: Array,
-    filterVal: String
+    filterVal: String,
+    startChatWithFriend: Function
 })
 
 const highlightText = (text) => {
@@ -43,6 +44,7 @@ const highlightText = (text) => {
         width: 100%;
         height: 60px;
         cursor: default;
+        user-select: none;
 
         &:hover {
             background-color: #f0f0f0;
