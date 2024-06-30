@@ -17,9 +17,9 @@
       </div>
       <div class="search">
         <img class="search-icon" src="../assets/search.png" alt="">
-        <input type="text" @focus="openSearchList" @blur="closeSearchList">
+        <input type="text" @focus="openSearchList" @blur="closeSearchList" @input="filterFriedns" v-model="filterVal" >
         <img class="close-icon" src="../assets/close.png" alt="" @click="closeSearchList">
-        <SearchList v-if="isSearchList" />
+        <SearchList v-if="isSearchList" :filterFriednsArr="filterFriednsArr" :filterVal="filterVal" />
       </div>
       <div class="toolbar">
         <span @click="showSection('friends')" :class="{ active: currentSection === 'friends' }">我的好友</span>
@@ -142,6 +142,8 @@ const userintro = ref('');
 const editingIntro = ref(false);
 const editIntroRef = ref(null);
 const isSearchList = ref(false);
+const filterVal = ref('');
+const filterFriednsArr = ref([]);
 
 const ws = new WebSocket("ws://localhost:3000");
 useDraggable(sidebar, sidebar);
@@ -529,10 +531,17 @@ const openSearchList = () => {
 
 const closeSearchList = () => {
   isSearchList.value = false;
+  filterVal.value = '';
+};
+
+const filterFriedns = (event) => {
+  filterFriednsArr.value = friends.value.filter(friend => {
+    return friend.user_id.toString().includes(filterVal.value) || friend.username.includes(filterVal.value);
+  });
 };
 </script>
 
-<style scoped lang="less">
+<style lang="less" scoped>
 .container {
   display: flex;
   height: 100vh;

@@ -13,4 +13,8 @@
    padding: 0;
    box-sizing: border-box;
 }
+
+.highlight {
+    color: rgb(18,183,245) !important;
+}
 </style>
